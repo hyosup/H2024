@@ -1,0 +1,40 @@
+<mvc:View controllerName="sap.ui.demo.walkthrough.controller.App"
+    xmlns="sap.m"
+    xmlns:core="sap.ui.core"
+    xmlns:mvc="sap.ui.core.mvc" displayBlock="true">
+    <Shell>
+        <App>
+            <pages>
+                <Page title="{i18n>mhomePageTitle}">
+                    <!-- <headerContent>
+                        <Select width="120px" selectedKey="ko" change=".onChangeLanguage">
+                            <items>
+                                <core:Item key="ko" text="Korean" />
+                                <core:Item key="en" text="English" />
+                            </items>
+                        </Select>
+                    </headerContent> -->
+                    <!-- <VBox>
+                        <Text text='{= ${device>/isTouch} ? "isPhone:yes" : "isPhone:No"}' />
+                        <Text text='{= ${device>/isPhone} ? "isPhone:yes" : "isPhone:No"}' />
+                        <Text text='{= ${device>/isPad} ? "isPhone:yes" : "isPhone:No"}' />
+                        <Text text='{= ${device>/isDesktop} ? "isDesktop:yes" : "isDesktop:No"}' />
+                        <Text text='{= ${device>/combi} ? "combi:yes" : "combi:No"}' />
+                        <Text text='{= ${device/desktop} ? "desktop:yes" : "desktop:No"}' />
+                        <Text text='{= ${device>/phone} ? "phone:yes" : "phone:No"}' />
+                        <Text text='{= ${device/tablet} ? "tablet:yes" : "tablet:No"}' />
+                        <Text text='{= ${Device/system/desktop} ? "sss:yes" : "ss:No"}' />
+                        <Text text='1111{= ${system/desktop}}' />
+                        
+                    </VBox> -->
+                    <content>
+                        <core:Fragment fragmentName="sap.ui.demo.walkthrough.view.fragment.MHmmaSample" type="XML" />
+                        <!-- <core:Fragment fragmentName="sap.ui.demo.walkthrough.view.fragment.Grid" type="XML" />
+                        <core:Fragment fragmentName="sap.ui.demo.walkthrough.view.fragment.Table" type="XML" /> -->
+                    </content>
+                </Page>
+            </pages>
+        </App>
+    </Shell>
+</mvc:View>
+

@@ -1,0 +1,73 @@
+FUNCTION ZCA_UI_CREATE_ATTACHMENT
+  IMPORTING
+    VALUE(IS_ATTACH) TYPE ZUI_ATTACHMENTS_S OPTIONAL
+    VALUE(IT_CONTENT) TYPE SOLIX_TAB OPTIONAL
+    VALUE(IV_CONTENT) TYPE XSTRING OPTIONAL
+  EXPORTING
+    VALUE(EV_DOC_GUID) TYPE GUID_32
+  EXCEPTIONS
+    ATTACHMENT_EXCEPTION.
+
+
+
+
+
+DATA lr_ui_attach TYPE REF TO zcl_ut_ui5_attachments.
+
+CREATE OBJECT lr_ui_attach.
+
+   DATA : lv_file_data      TYPE xstring,
+           lv_file_path      TYPE zut_path_file,
+           lv_filename       TYPE localfile,
+           lv_xstring        TYPE xstring,
+           lv_string         TYPE string,
+           lt_bin_tab        TYPE solix_tab,
+           lv_length         TYPE i,
+           ls_ui_attachments TYPE zui_attachments,
+           rv_path           TYPE zut_path_file,
+           lv_filepath_str   TYPE string,
+           lv_file           TYPE string,
+           lv_extn           TYPE string.
+
+* Add timestamp (Filename with TimeStamp and FolderName is stored separately in table
+    CALL METHOD lr_ui_attach->add_timestamp
+      EXPORTING
+        iv_filename     = is_attach-filename
+      IMPORTING
+        ev_file_tmstamp = lv_filename.
+
+* File Path
+    CALL METHOD lr_ui_attach->get_attach_folder_path
+      EXPORTING
+        iv_obj_name  = is_attach-obj_name
+        iv_file_name = lv_filename
+      IMPORTING
+        ev_file_path = rv_path.
+
+
+    OPEN DATASET rv_path FOR OUTPUT IN BINARY MODE.
+    IF sy-subrc <> 0.
+      DATA(lv_error) = abap_true.
+    ELSE.
+      IF it_content IS NOT INITIAL.
+        LOOP AT it_content INTO DATA(ls_content).
+          TRANSFER ls_content-line TO rv_path.
+        ENDLOOP.
+      ELSE.
+        TRANSFER iv_content TO rv_path.
+      ENDIF.
+    ENDIF.
+    CLOSE DATASET rv_path.
+
+    IF lv_error IS INITIAL.
+* Write Record to DB table
+      MOVE-CORRESPONDING is_attach TO ls_ui_attachments.
+      ls_ui_attachments-guid     = cl_system_uuid=>if_system_uuid_static~create_uuid_c32( ).
+      ls_ui_attachments-filename = lv_filename.       "store timestamp filename only, path is mapped from ZUI_ATTACH_PATH
+      INSERT zui_attachments FROM ls_ui_attachments.
+      ev_doc_guid = ls_ui_attachments-guid.
+      COMMIT WORK.
+    ELSE.
+      RAISE attachment_exception.
+    ENDIF.
+ENDFUNCTION.

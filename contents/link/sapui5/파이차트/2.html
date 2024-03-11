@@ -1,0 +1,13 @@
+<!DOCTYPE html>
+<html><head><title>Pay Slip</title><style>
+<style>@media print {  table tr { -webkit-print-color-adjust:exact;}}@media print { button, #sec_2{display:none} }</style>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js" integrity="sha512-GsLlZN/3F2ErC5ifS5QtgpiJtWd43JWSuIgh7mbzZ8zBps+dvLusV+eNQATqgA/HdeKFVgA5v3S/cIrLF7QnIg==" crossorigin="anonymous" referrerpolicy="no-referrer"></script>
+<script src="https://d3js.org/d3.v7.min.js"></script><script src="/lib/d3Chart.js"></script>
+<script>function onPrint(){ window.print(); window.close(); }
+function onHTMLPDF(){   const oOptions = {  margin: [0.3,1,0.5,1] };   
+const elementHTML = document.getElementById("pdf_canvas");  html2pdf().set(oOptions).from(elementHTML).save(); }</script></head><body>
+<style>@media print {  table tr { -webkit-print-color-adjust:exact;}}@media print { button, #sec_2{display:none} }</style>
+<button type="button" style="float: left;" onclick="onPrint()" )"="">Print</button>&nbsp;<button type="button" style="float: left;" onclick="onHTMLPDF()" )"="">PDF</button><div id="pdf_canvas"><p>
+<div id="content" height="300px">111</div>
+</body></html>
+<script> var dataset = [{ "name": "A", "value": 5 },{ "name": "H", "value": 6 },{ "name": "I", "value": 10 },  { "name": "J", "value": 9 }]; var width = 400; var height = 300; var radius = Math.min(width, height) / 2 - 10; var svg = d3.select("body").append("svg").attr("width", width).attr("height", height);  var g = svg.append("g").attr("transform", "translate(" + width / 2 + "," + height / 2 + ")");  var color = d3.scaleOrdinal().range(["#DC3912", "#3366CC", "#109618", "#FF9900", "#990099"]);  var pie = d3.pie().value(function(d) { return d.value; }).sort(null);  var pieGroup = g.selectAll(".pie").data(pie(dataset)).enter().append("g").attr("class", "pie");  var arc = d3.arc().outerRadius(radius).innerRadius(0);  pieGroup.append("path").attr("d", arc).attr("fill", function(d) { return color(d.index) }).attr("opacity", 0.75).attr("stroke", "white"); var text = d3.arc().outerRadius(radius - 30).innerRadius(radius - 30); pieGroup.append("text").attr("fill", "black").attr("transform", function(d) { return "translate(" + text.centroid(d) + ")"; }).attr("dy", "5px").attr("font", "10px").attr("text-anchor", "middle").text(function(d) { return d.data.name; }); </script>

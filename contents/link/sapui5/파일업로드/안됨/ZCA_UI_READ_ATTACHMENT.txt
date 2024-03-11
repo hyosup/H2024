@@ -1,0 +1,41 @@
+FUNCTION ZCA_UI_READ_ATTACHMENT
+  IMPORTING
+    VALUE(IV_GUID) TYPE GUID_32 OPTIONAL
+  EXPORTING
+    VALUE(ES_ATTACH_DATA) TYPE ZUI_ATTACHMENTS
+    VALUE(EV_CONTENT) TYPE XSTRING.
+
+
+
+
+DATA lr_ui_attach TYPE REF TO zcl_ut_ui5_attachments.
+DATA : ls_file        TYPE solix,
+       lt_file_binary TYPE solix_tab,
+       lv_path        TYPE localfile.
+
+    CREATE OBJECT lr_ui_attach.
+* Get File to be read
+    SELECT SINGLE * FROM zui_attachments INTO @DATA(ls_ui_attachments)
+           WHERE guid = @iv_guid.
+    IF sy-subrc = 0.
+
+* File Path
+      CALL METHOD lr_ui_attach->get_attach_folder_path
+        EXPORTING
+          iv_obj_name  = ls_ui_attachments-obj_name
+          iv_file_name = ls_ui_attachments-filename
+        IMPORTING
+          ev_file_path = lv_path.
+
+      OPEN DATASET lv_path FOR INPUT IN BINARY MODE.
+      IF sy-subrc = 0.
+        READ DATASET lv_path INTO ev_content.
+      ENDIF.
+      CLOSE DATASET lv_path.
+
+      es_attach_data = ls_ui_attachments.
+    ENDIF.
+
+
+
+ENDFUNCTION.

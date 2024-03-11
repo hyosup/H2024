@@ -1,0 +1,166 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+  <meta charset="utf-8">
+  <title>D3 Pie Chart</title>
+  <script src="https://d3js.org/d3.v7.min.js"></script>
+</head>
+
+<body>
+  <script>
+  // 1. 데이터 준비
+  var dataset = [
+    { "name": "A", "value": 25 },
+    { "name": "B", "value": 75 }
+  ]
+
+  var width = 300; // 그래프 넓이
+  var height = 150; // 그래프 높이
+  var radius = Math.min(width, height) / 2 - 10;
+
+  // 2. SVG 영역 설정
+  var svg = d3.select("body").append("svg").attr("width", width).attr("height", height);
+
+  var g = svg.append("g").attr("transform", "translate(" + width / 2 + "," + height / 2 + ")");
+
+  // 3. 컬러 설정
+  var color = d3.scaleOrdinal()
+    .domain(["Lorem ipsum", "dolor sit"])
+    .range(["#717173", "#004183"]);
+
+  // 4. pie 차트 dateset에 대한 함수 설정
+  var pie = d3.pie()
+    .value(function(d) { return d.value; })
+    .sort(null);
+
+  // 5. pie 차트 SVG 요소 설정
+  var pieGroup = g.selectAll(".pie")
+    .data(pie(dataset))
+    .enter()
+    .append("g")
+    .attr("class", "pie");
+
+  arc = d3.arc()
+    .outerRadius(radius)
+    .innerRadius(0);
+
+  pieGroup.append("path")
+    .attr("d", arc)
+    .attr("fill", function(d) { return color(d.index) })
+    .attr("opacity", 0.75)
+    .attr("stroke", "white");
+
+  // 6. pie 차트 텍스트 SVG 요소 설정
+  var text = d3.arc()
+    .outerRadius(radius - 30)
+    .innerRadius(radius - 30);
+
+  pieGroup.append("text")
+    .attr("fill", "black")
+    .attr("transform", function(d) { return "translate(" + text.centroid(d) + ")"; })
+    .attr("dy", "5px")
+    .attr("font", "10px")
+    .attr("text-anchor", "middle")
+    .text(function(d) { return d.data.name; });
+	
+	
+	chartChange([{ "label": "112", "value": 25 }, { "label": "B", "value": 75 }]);
+	
+function  chartChange(data) {
+
+	/* ------- PIE SLICES -------*/
+	var slice = svg.select(".slices").selectAll("path.slice")
+		.data(pie(data), key);
+
+	slice.enter()
+		.insert("path")
+		.style("fill", function(d) { return color(d.data.label); })
+		.attr("class", "slice");
+
+	slice		
+		.transition().duration(1000)
+		.attrTween("d", function(d) {
+			this._current = this._current || d;
+			var interpolate = d3.interpolate(this._current, d);
+			this._current = interpolate(0);
+			return function(t) {
+				return arc(interpolate(t));
+			};
+		})
+
+	slice.exit()
+		.remove();
+
+	/* ------- TEXT LABELS -------*/
+
+	var text = svg.select(".labels").selectAll("text")
+		.data(pie(data), key);
+
+	text.enter()
+		.append("text")
+		.attr("dy", ".35em")
+		.text(function(d) {
+			return d.data.label;
+		});
+	
+	function midAngle(d){
+		return d.startAngle + (d.endAngle - d.startAngle)/2;
+	}
+
+	text.transition().duration(1000)
+		.attrTween("transform", function(d) {
+			this._current = this._current || d;
+			var interpolate = d3.interpolate(this._current, d);
+			this._current = interpolate(0);
+			return function(t) {
+				var d2 = interpolate(t);
+				var pos = outerArc.centroid(d2);
+				pos[0] = radius * (midAngle(d2) < Math.PI ? 1 : -1);
+				return "translate("+ pos +")";
+			};
+		})
+		.styleTween("text-anchor", function(d){
+			this._current = this._current || d;
+			var interpolate = d3.interpolate(this._current, d);
+			this._current = interpolate(0);
+			return function(t) {
+				var d2 = interpolate(t);
+				return midAngle(d2) < Math.PI ? "start":"end";
+			};
+		});
+
+	text.exit()
+		.remove();
+
+	/* ------- SLICE TO TEXT POLYLINES -------*/
+
+	var polyline = svg.select(".lines").selectAll("polyline")
+		.data(pie(data), key);
+	
+	polyline.enter()
+		.append("polyline");
+
+	polyline.transition().duration(1000)
+		.attrTween("points", function(d){
+			this._current = this._current || d;
+			var interpolate = d3.interpolate(this._current, d);
+			this._current = interpolate(0);
+			return function(t) {
+				var d2 = interpolate(t);
+				var pos = outerArc.centroid(d2);
+				pos[0] = radius * 0.95 * (midAngle(d2) < Math.PI ? 1 : -1);
+				return [arc.centroid(d2), outerArc.centroid(d2), pos];
+			};			
+		});
+	
+	polyline.exit()
+		.remove();
+};
+
+
+
+  </script>
+</body>
+
+</html>
