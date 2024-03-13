@@ -1,0 +1,19 @@
+<mvc:View
+	controllerName="hkmc.ca.zucaz00010.controller.View1"
+	xmlns:mvc="sap.ui.core.mvc"
+	displayBlock="true"
+	xmlns="sap.m"
+>
+	<Page
+		id="page"
+		title="{i18n>title}"
+	>
+		<content>
+			<VBox id="idVBox"/>
+			<Button
+				text="empty string"
+				press="handlePress"
+			/>
+		</content>
+	</Page>
+</mvc:View>

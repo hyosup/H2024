@@ -1,0 +1,141 @@
+{
+    "_version": "1.33.0",
+    "sap.app": {
+        "id": "hkmc.ca.zucaa00010",
+        "type": "application",
+        "i18n": "i18n/i18n.properties",
+        "applicationVersion": {
+            "version": "0.0.1"
+        },
+        "title": "{{appTitle}}",
+        "description": "{{appDescription}}",
+        "resources": "resources.json",
+        "sourceTemplate": {
+            "id": "@sap/generator-fiori:basic",
+            "version": "1.7.3",
+            "toolsId": "990cffc4-42c1-4f4a-8367-c3f1e2cbf7b5"
+        },
+        "dataSources": {
+            "mainService": {
+                "uri": "/sap/opu/odata/sap/ZGWCAA00010_SRV/",
+                "type": "OData",
+                "settings": {
+                    "annotations": [],
+                    "localUri": "localService/metadata.xml",
+                    "odataVersion": "2.0"
+                }
+            }
+        }
+    },
+    "sap.ui": {
+        "technology": "UI5",
+        "fullWidth": true,
+        "icons": {
+            "icon": "",
+            "favIcon": "",
+            "phone": "",
+            "phone@2": "",
+            "tablet": "",
+            "tablet@2": ""
+        },
+        "deviceTypes": {
+            "desktop": true,
+            "tablet": true,
+            "phone": true
+        }
+    },
+    "sap.ui5": {
+        "flexEnabled": true,
+        "dependencies": {
+            "minUI5Version": "1.96.12",
+            "libs": {
+                "sap.m": {},
+                "sap.ui.core": {},
+                "sap.f": {},
+                "sap.suite.ui.generic.template": {},
+                "sap.ui.comp": {},
+                "sap.ui.generic.app": {},
+                "sap.ui.table": {},
+                "sap.ushell": {}
+            }
+        },
+        "contentDensities": {
+            "compact": true,
+            "cozy": true
+        },
+        "models": {
+            "i18n": {
+                "type": "sap.ui.model.resource.ResourceModel",
+                "settings": {
+                    "bundleName": "hkmc.ca.zucaa00010.i18n.i18n"
+                }
+            },
+            "": {
+                "dataSource": "mainService",
+                "preload": true,
+                "settings": {
+                    "defaultCountMode": "None",
+                    "defaultOperationMode": "Server",
+                    "defaultBindingMode": "TwoWay",
+                    "refreshAfterChange": "true"
+                }
+            }
+        },
+        "resources": {
+            "css": [
+                {
+                    "uri": "css/style.css"
+                }
+            ]
+        },
+        "routing": {
+            "config": {
+                "routerClass": "sap.f.routing.Router",
+                "viewType": "XML",
+                "controlAggregation": "beginColumnPages",
+                "async": true,
+                "viewPath": "hkmc.ca.zucaa00010.view",
+                "controlId": "app",
+                "clearControlAggregation": false
+            },
+            "routes": [
+                {
+                    "name": "RouteList",
+                    "pattern": ":?query:",
+                    "target": [
+                        "TargetList"
+                    ]
+                },
+                {
+                    "name": "RouteContents",
+                    "pattern": "{node_id}/{version}/{spras}:?query:",
+                    "target": [
+                        "TargetList",
+                        "TargetContents"
+                    ]
+                }
+            ],
+            "targets": {
+                "TargetList": {
+                    "viewType": "XML",
+                    "clearControlAggregation": false,
+                    "viewId": "List",
+                    "viewName": "List"
+                },
+                "TargetContents": {
+                    "viewType": "XML",
+                    "clearControlAggregation": false,
+                    "viewId": "Contents",
+                    "viewName": "Contents",
+                    "controlAggregation": "midColumnPages"
+                }
+            }
+        },
+        "rootView": {
+            "viewName": "hkmc.ca.zucaa00010.view.App",
+            "type": "XML",
+            "async": true,
+            "id": "App"
+        }
+    }
+}

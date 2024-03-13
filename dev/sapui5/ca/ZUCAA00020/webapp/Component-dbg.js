@@ -1,0 +1,34 @@
+jQuery.sap.registerModulePath("hkmc.ca.zucaz00010", "/sap/bc/ui5_ui5/sap/zucaz00010");
+
+sap.ui.define([
+        "sap/ui/core/UIComponent",
+        "sap/ui/Device",
+        "hkmc/ca/zucaa00020/model/models"
+    ],
+    function (UIComponent, Device, models) {
+        "use strict";
+
+        return UIComponent.extend("hkmc.ca.zucaa00020.Component", {
+            metadata: {
+                manifest: "json"
+            },
+
+            /**
+             * The component is initialized by UI5 automatically during the startup of the app and calls the init method once.
+             * @public
+             * @override
+             */
+            init: function () {
+                // call the base component's init function
+                UIComponent.prototype.init.apply(this, arguments);
+
+                // enable routing
+                this.getRouter().initialize();
+
+               // set the device model
+               this.setModel(models.createDeviceModel(), "device");
+               this.setModel(models.createViewConfigModel(), "viewConfig");
+            }
+        });
+    }
+);

@@ -1,0 +1,60 @@
+<mvc:View
+	controllerName="hkmc.ca.zucaa00010.controller.Contents"
+	xmlns:core="sap.ui.core"
+	xmlns:mvc="sap.ui.core.mvc"
+	xmlns="sap.m"
+	height="100%"
+>
+	<Page showHeader="false">
+		<subHeader>
+			<Toolbar>
+				<Button
+					type="Transparent"
+					icon="sap-icon://media-rewind"
+					press="handleFullScreenPress"
+					visible="{= ${viewConfig>/layout}==='MidColumnFullScreen'?false:true}"
+				/>
+				<Button
+					type="Transparent"
+					icon="sap-icon://media-forward"
+					press="handleFullScreenPress"
+					visible="{= ${viewConfig>/layout}==='MidColumnFullScreen'?true:false}"
+				/>
+				<ToolbarSpacer/>
+				<Text text="{NodePath}"/>
+				
+				<ToolbarSpacer/>
+				<Select
+					id="idLanguComboBox"					
+					change="handleLanguChange"
+					selectedKey="{viewConfig>/contentLanguage}"
+					items="{
+						path: '/F4LanguSet'
+					}"
+				>
+					<core:Item
+						key="{Spras}"
+						text="{Txtsh}"
+					/>
+				</Select>
+			</Toolbar>
+		</subHeader>
+		<content>
+			<IconTabHeader id="idTabHeader" mode="Inline" select="handleTabSelect">				
+			</IconTabHeader>
+			<VBox id="idRTEcontainer"/>
+		</content>
+		<footer>
+			<Bar>
+				<contentRight>
+					<ToolbarSpacer/>
+					<Button
+						text="{i18n>save}"
+						press="handleSavePress"
+						type="Transparent"
+					/>
+				</contentRight>
+			</Bar>
+		</footer>
+	</Page>
+</mvc:View>

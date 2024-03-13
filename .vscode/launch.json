@@ -1,0 +1,239 @@
+{
+    "version": "0.2.0",
+    "configurations": [
+        {
+            "name": "Start ZUCAA00010",
+            "type": "node",
+            "request": "launch",
+            "runtimeExecutable": "npx",
+            "cwd": "${workspaceFolder}/dev\\sapui5\\ca\\ZUCAA00010",
+            "windows": {
+                "runtimeExecutable": "npx.cmd"
+            },
+            "runtimeArgs": [
+                "fiori",
+                "run"
+            ],
+            "args": [
+                "--open",
+                "test/flpSandbox.html#hkmccazucaa00010-display"
+            ],
+            "console": "internalConsole",
+            "internalConsoleOptions": "openOnSessionStart",
+            "outputCapture": "std",
+            "port": 9229,
+            "env": {
+                "DEBUG": "--inspect",
+                "FIORI_TOOLS_URL_PARAMS": "sap-client=410&sap-ui-xx-viewCache=false"
+            }
+        },
+        {
+            "name": "Start ZUCAA00010 Mock",
+            "type": "node",
+            "request": "launch",
+            "cwd": "${workspaceFolder}/dev\\sapui5\\ca\\ZUCAA00010",
+            "runtimeExecutable": "npx",
+            "windows": {
+                "runtimeExecutable": "npx.cmd"
+            },
+            "runtimeArgs": [
+                "fiori",
+                "run"
+            ],
+            "args": [
+                "--open",
+                "test/flpSandboxMockServer.html#hkmccazucaa00010-display"
+            ],
+            "console": "internalConsole",
+            "internalConsoleOptions": "openOnSessionStart",
+            "outputCapture": "std",
+            "port": 9229,
+            "env": {
+                "FIORI_TOOLS_URL_PARAMS": "sap-client=410&sap-ui-xx-viewCache=false"
+            }
+        },
+        {
+            "name": "Start ZUCAA00010 Local",
+            "type": "node",
+            "request": "launch",
+            "cwd": "${workspaceFolder}/dev\\sapui5\\ca\\ZUCAA00010",
+            "runtimeExecutable": "npx",
+            "windows": {
+                "runtimeExecutable": "npx.cmd"
+            },
+            "runtimeArgs": [
+                "fiori",
+                "run"
+            ],
+            "args": [
+                "--config",
+                "./ui5-local.yaml",
+                "--open",
+                "test/flpSandbox.html#hkmccazucaa00010-display"
+            ],
+            "console": "internalConsole",
+            "internalConsoleOptions": "openOnSessionStart",
+            "outputCapture": "std",
+            "port": 9229,
+            "env": {
+                "FIORI_TOOLS_URL_PARAMS": "sap-client=410&sap-ui-xx-viewCache=false"
+            }
+        },
+        {
+            "name": "Start ZUCAA00020",
+            "type": "node",
+            "request": "launch",
+            "runtimeExecutable": "npx",
+            "cwd": "${workspaceFolder}/dev\\sapui5\\ca\\ZUCAA00020",
+            "windows": {
+                "runtimeExecutable": "npx.cmd"
+            },
+            "runtimeArgs": [
+                "fiori",
+                "run"
+            ],
+            "args": [
+                "--open",
+                "test/flpSandbox.html#hkmccazucaa00020-display"
+            ],
+            "console": "internalConsole",
+            "internalConsoleOptions": "openOnSessionStart",
+            "outputCapture": "std",
+            "port": 9229,
+            "env": {
+                "DEBUG": "--inspect",
+                "FIORI_TOOLS_URL_PARAMS": "sap-client=410&sap-ui-xx-viewCache=false"
+            }
+        },
+        {
+            "name": "Start ZUCAA00020 Mock",
+            "type": "node",
+            "request": "launch",
+            "cwd": "${workspaceFolder}/dev\\sapui5\\ca\\ZUCAA00020",
+            "runtimeExecutable": "npx",
+            "windows": {
+                "runtimeExecutable": "npx.cmd"
+            },
+            "runtimeArgs": [
+                "fiori",
+                "run"
+            ],
+            "args": [
+                "--open",
+                "test/flpSandboxMockServer.html#hkmccazucaa00020-display"
+            ],
+            "console": "internalConsole",
+            "internalConsoleOptions": "openOnSessionStart",
+            "outputCapture": "std",
+            "port": 9229,
+            "env": {
+                "FIORI_TOOLS_URL_PARAMS": "sap-client=410&sap-ui-xx-viewCache=false"
+            }
+        },
+        {
+            "name": "Start ZUCAA00020 Local",
+            "type": "node",
+            "request": "launch",
+            "cwd": "${workspaceFolder}/dev\\sapui5\\ca\\ZUCAA00020",
+            "runtimeExecutable": "npx",
+            "windows": {
+                "runtimeExecutable": "npx.cmd"
+            },
+            "runtimeArgs": [
+                "fiori",
+                "run"
+            ],
+            "args": [
+                "--config",
+                "./ui5-local.yaml",
+                "--open",
+                "test/flpSandbox.html#hkmccazucaa00020-display"
+            ],
+            "console": "internalConsole",
+            "internalConsoleOptions": "openOnSessionStart",
+            "outputCapture": "std",
+            "port": 9229,
+            "env": {
+                "FIORI_TOOLS_URL_PARAMS": "sap-client=410&sap-ui-xx-viewCache=false"
+            }
+        },
+        {
+            "name": "Start ZUCAZ00010",
+            "type": "node",
+            "request": "launch",
+            "runtimeExecutable": "npx",
+            "cwd": "${workspaceFolder}/dev\\sapui5\\ca\\ZUCAZ00010",
+            "windows": {
+                "runtimeExecutable": "npx.cmd"
+            },
+            "runtimeArgs": [
+                "fiori",
+                "run"
+            ],
+            "args": [
+                "--open",
+                "test/flpSandbox.html#hkmccazucaz00010-display"
+            ],
+            "console": "internalConsole",
+            "internalConsoleOptions": "openOnSessionStart",
+            "outputCapture": "std",
+            "port": 9229,
+            "env": {
+                "DEBUG": "--inspect",
+                "FIORI_TOOLS_URL_PARAMS": "sap-client=410&sap-ui-xx-viewCache=false"
+            }
+        },
+        {
+            "name": "Start ZUCAZ00010 Mock",
+            "type": "node",
+            "request": "launch",
+            "cwd": "${workspaceFolder}/dev\\sapui5\\ca\\ZUCAZ00010",
+            "runtimeExecutable": "npx",
+            "windows": {
+                "runtimeExecutable": "npx.cmd"
+            },
+            "runtimeArgs": [
+                "fiori",
+                "run"
+            ],
+            "args": [
+                "--open",
+                "test/flpSandboxMockServer.html#hkmccazucaz00010-display"
+            ],
+            "console": "internalConsole",
+            "internalConsoleOptions": "openOnSessionStart",
+            "outputCapture": "std",
+            "port": 9229,
+            "env": {
+                "FIORI_TOOLS_URL_PARAMS": "sap-client=410&sap-ui-xx-viewCache=false"
+            }
+        },
+        {
+            "name": "Start ZUCAZ00010 Local",
+            "type": "node",
+            "request": "launch",
+            "cwd": "${workspaceFolder}/dev\\sapui5\\ca\\ZUCAZ00010",
+            "runtimeExecutable": "npx",
+            "windows": {
+                "runtimeExecutable": "npx.cmd"
+            },
+            "runtimeArgs": [
+                "fiori",
+                "run"
+            ],
+            "args": [
+                "--config",
+                "./ui5-local.yaml",
+                "--open",
+                "test/flpSandbox.html#hkmccazucaz00010-display"
+            ],
+            "console": "internalConsole",
+            "internalConsoleOptions": "openOnSessionStart",
+            "outputCapture": "std",
+            "port": 9229,
+            "env": {
+                "FIORI_TOOLS_URL_PARAMS": "sap-client=410&sap-ui-xx-viewCache=false"
+            }
+        }
+    ]
+}

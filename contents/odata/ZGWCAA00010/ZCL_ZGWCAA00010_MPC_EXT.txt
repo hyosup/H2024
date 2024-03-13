@@ -1,0 +1,14 @@
+  METHOD define.
+    DATA : lo_anno TYPE REF TO zcl_caz_gw_vocabulary.
+
+    super->define( ).
+
+    lo_anno = NEW zcl_caz_gw_vocabulary( io_model = model
+                                         io_vocab_anno_model = vocab_anno_model
+                                         iv_entity_name = 'Tree'
+                                         iv_model_name = get_model_name( ) ).
+    lo_anno->set_hierarchy( EXPORTING iv_node_property_name = 'NodeId'
+                                         iv_parent_node_property_name = 'PnodeId'
+                                         iv_state_property_name = 'NodeType'
+                                         iv_level_property_name = 'Zlevel' ).
+  ENDMETHOD.

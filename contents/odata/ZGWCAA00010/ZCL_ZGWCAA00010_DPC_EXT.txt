@@ -1,0 +1,1143 @@
+  METHOD /iwbep/if_mgw_appl_srv_runtime~create_deep_entity.
+    CASE iv_entity_name.
+      WHEN 'Tree'.
+        DATA : BEGIN OF ls_subsection_ts.
+                 .INCLUDE TYPE zcl_zgwcaa00010_mpc=>ts_subsection.
+        DATA:    to_subsection TYPE TABLE OF zcl_zgwcaa00010_mpc=>ts_subsection. " 언어별 subsection
+        DATA : END OF ls_subsection_ts.
+
+        DATA : BEGIN OF ls_input.
+                 .INCLUDE TYPE zcl_zgwcaa00010_mpc=>ts_node.
+        DATA :   to_node TYPE TABLE OF zcl_zgwcaa00010_mpc=>ts_node. "언어별 Node Title
+        DATA : to_subsection LIKE TABLE OF ls_subsection_ts. "subsection
+        DATA : END OF ls_input.
+
+        DATA : ls_node         TYPE ztcaa00010,
+               ls_subsection   TYPE ztcaa00010,
+               lt_subsection   TYPE TABLE OF ztcaa00010,
+               ls_node_t       TYPE ztcaa00011,
+               lt_node_t       TYPE TABLE OF ztcaa00011,
+               ls_subsection_t TYPE ztcaa00011,
+               lt_subsection_t TYPE TABLE OF ztcaa00011,
+               lv_cnt          TYPE i.
+
+        io_data_provider->read_entry_data( IMPORTING es_data = ls_input ).
+
+
+        IF ls_input-node_id IS INITIAL. "신규노드 생성
+          "$. Region  1.노드 생성
+          ls_node-pnode_id = ls_input-pnode_id.
+          ls_node-node_type = ls_input-node_type.
+          ls_node-version = ls_input-version.
+
+          "신규 노드 id생성
+          ls_node-node_id = zcl_caz_gw_util=>get_guid( ).
+          ls_input-node_id = ls_node-node_id.
+
+          "$. Region 부모노드가 동일한 노드들중 가장 마지막 노드의 정렬순서에 10 더하기
+          SELECT MAX( zsort ) INTO ls_node-zsort
+          FROM zvcaa00010d
+          WHERE pnode_id = ls_input-pnode_id.
+
+          ADD 10 TO ls_node-zsort.
+          "$. Endregion 부모노드가 동일한 노드들중 가장 마지막 노드의 정렬순서에 10 더하기
+
+          "$. Region 부모노드의 Level가져와서 1 더하기
+          SELECT SINGLE zlevel INTO ls_node-zlevel
+          FROM ztcaa00010
+          WHERE node_id = ls_input-pnode_id
+            AND version = ls_input-version
+            AND zdel EQ abap_false
+            AND objvers EQ zcl_zgwcaa00000_mpc_ext=>mc_node_status-active.
+
+          IF sy-subrc EQ 0.
+            ADD 1 TO ls_node-zlevel.
+            " Root노드 찾기
+            ls_node-rnode_id = zcl_zgwcaa00000_dpc_ext=>get_root_node( EXPORTING iv_node_id = ls_node-pnode_id
+                                                                                 iv_version = ls_node-version ).
+          ELSE.
+            ls_node-zlevel = 1. "부모 노드가 없으면 1level
+            ls_node-rnode_id = ls_node-node_id. " root노드는 자기 자신이 root노드
+          ENDIF.
+          "$. Endregion 부모노드의 Level가져와서 1 더하기
+
+          ls_node-objvers = zcl_zgwcaa00000_mpc_ext=>mc_node_status-active. " Active daTA
+
+          zcl_caz_gw_util=>get_create_timestamp( CHANGING cs_data = ls_node ).
+
+          INSERT ztcaa00010 FROM ls_node.
+          "$. Endregion  1.노드 생성
+
+
+          "$. Region 2. 노드의 언어별 Title생성
+          LOOP AT ls_input-to_node ASSIGNING FIELD-SYMBOL(<ls_node_t>).
+            CLEAR ls_node_t.
+            ls_node_t-node_id = ls_node-node_id.
+            ls_node_t-version = ls_node-version.
+            CALL FUNCTION 'CONVERSION_EXIT_ISOLA_INPUT'
+              EXPORTING
+                input            = <ls_node_t>-spras
+              IMPORTING
+                output           = ls_node_t-spras
+              EXCEPTIONS
+                unknown_language = 1
+                OTHERS           = 2.
+            ls_node_t-title = <ls_node_t>-title.
+            zcl_caz_gw_util=>get_create_timestamp( CHANGING cs_data = ls_node_t ).
+            APPEND ls_node_t TO lt_node_t.
+          ENDLOOP.
+          IF lt_node_t[] IS NOT INITIAL.
+            MODIFY ztcaa00011 FROM TABLE lt_node_t.
+          ENDIF.
+          "$. Endregion 2. 노드의 언어별 Title생성
+
+          "$. Region 3. 노드의 Subseciton생성
+          CLEAR lv_cnt.
+          LOOP AT ls_input-to_subsection ASSIGNING FIELD-SYMBOL(<ls_to_subsection>).
+            CLEAR ls_subsection.
+
+            ls_subsection-node_id = zcl_caz_gw_util=>get_guid( )." 신규 subsection id
+            ls_subsection-pnode_id = ls_node-node_id. " 상위 노드가 부모노드가 됨
+            ls_subsection-version = ls_node-version.
+
+            "subsection은 노드 신규 생성시 일괄 생성되므로 10씩 증가하며 정렬 순서 정의
+            ADD 10 TO lv_cnt.
+            ls_subsection-zsort = lv_cnt.
+            ls_subsection-zlevel = ls_node-zlevel + 1. " 상위 노드의 level에 1더함
+            ls_subsection-objvers = zcl_zgwcaa00000_mpc_ext=>mc_node_status-active. "Active data
+            ls_subsection-node_type = zcl_zgwcaa00000_mpc_ext=>mc_node_type-subsection.
+            ls_subsection-rnode_id = ls_node-rnode_id. " 상위 노드의 Root노드 Id를 동일하게 Root노드 id로 사용
+            zcl_caz_gw_util=>get_create_timestamp( CHANGING cs_data = ls_subsection ).
+            APPEND ls_subsection TO lt_subsection.
+
+            "Subsection의 언어별 title저장
+            LOOP AT <ls_to_subsection>-to_subsection ASSIGNING FIELD-SYMBOL(<ls_subsection_t>).
+              CLEAR ls_subsection_t.
+              ls_subsection_t-node_id = ls_subsection-node_id.
+              ls_subsection_t-version = ls_subsection-version.
+              CALL FUNCTION 'CONVERSION_EXIT_ISOLA_INPUT'
+                EXPORTING
+                  input            = <ls_subsection_t>-spras
+                IMPORTING
+                  output           = ls_subsection_t-spras
+                EXCEPTIONS
+                  unknown_language = 1
+                  OTHERS           = 2.
+              ls_subsection_t-title = <ls_subsection_t>-title.
+              zcl_caz_gw_util=>get_create_timestamp( CHANGING cs_data = ls_subsection_t ).
+              APPEND ls_subsection_t TO lt_subsection_t.
+            ENDLOOP.
+          ENDLOOP.
+          IF lt_subsection[] IS NOT INITIAL.
+            INSERT ztcaa00010 FROM TABLE lt_subsection.
+          ENDIF.
+          IF lt_subsection_t[] IS NOT INITIAL.
+            INSERT ztcaa00011 FROM TABLE lt_subsection_t.
+          ENDIF.
+          "$. Endregion 3. 노드의 Subseciton생성
+
+        ELSE." 기존 노드 수정( 기존 노드는 Title만 수정가능하므로 ztcaa00010테이블은 수정 안함 )
+          "$. Region 1. 기존 노드 Title수정
+          LOOP AT ls_input-to_node ASSIGNING <ls_node_t>.
+
+            "이미 존재하는 언어인지 확인
+            SELECT SINGLE node_id INTO ls_node_t-node_id
+            FROM ztcaa00011
+            WHERE node_id = ls_input-node_id
+              AND version = ls_input-version
+              AND spras = <ls_node_t>-spras.
+
+            IF sy-subrc EQ 0." 기존 언어 title수정
+              UPDATE ztcaa00011
+              SET title = <ls_node_t>-title
+                  aenam = sy-uname
+                  aedat = sy-datum
+                  aezet = sy-uzeit
+              WHERE node_id = ls_input-node_id
+                AND version = ls_input-version
+                AND spras = <ls_node_t>-spras.
+            ELSE. " 신규 언어 title저장
+              CLEAR ls_node_t.
+              ls_node_t-node_id = ls_input-node_id.
+              ls_node_t-version = ls_input-version.
+              CALL FUNCTION 'CONVERSION_EXIT_ISOLA_INPUT'
+                EXPORTING
+                  input            = <ls_node_t>-spras
+                IMPORTING
+                  output           = ls_node_t-spras
+                EXCEPTIONS
+                  unknown_language = 1
+                  OTHERS           = 2.
+              ls_node_t-title = <ls_node_t>-title.
+              zcl_caz_gw_util=>get_create_timestamp( CHANGING cs_data = ls_node_t ).
+              APPEND ls_node_t TO lt_node_t.
+            ENDIF.
+          ENDLOOP.
+
+          IF lt_node_t[] IS NOT  INITIAL.
+            MODIFY ztcaa00011 FROM TABLE lt_node_t.
+          ENDIF.
+          "$. Endregion 1. 기존 노드 Title수정
+
+          "$. Region 2. subsection수정
+          CLEAR lv_cnt.
+          LOOP AT ls_input-to_subsection ASSIGNING <ls_to_subsection>.
+            " 신규subsection일때만 저장, 수정은 title만 하므로 ztcaa00010과 상관 없음
+            CHECK <ls_to_subsection>-node_id IS INITIAL.
+            ls_subsection-node_id = zcl_caz_gw_util=>get_guid( )." 신규 subsection id
+            ls_subsection-pnode_id = ls_input-node_id.
+            ls_subsection-version = ls_input-version.
+
+            "상위 노드의 root node를 동일하게 사용하고, level은 상위 노드의 +1
+            SELECT SINGLE zlevel rnode_id
+            INTO ( ls_subsection-zlevel, ls_subsection-rnode_id )
+            FROM ztcaa00010
+            WHERE node_id = ls_input-node_id
+              AND version = ls_input-version
+              AND zdel EQ abap_false
+              AND objvers EQ zcl_zgwcaa00000_mpc_ext=>mc_node_status-active.
+
+            IF sy-subrc EQ 0.
+              ADD 1 TO ls_subsection-zlevel.
+            ELSE.
+              ls_subsection-zlevel = 1.
+            ENDIF.
+
+            "사우이 노드가 동일한 노드들의 정렬 순서 가져와 10씩 증가
+            SELECT MAX( zsort ) INTO ls_subsection-zsort
+            FROM ztcaa00010
+            WHERE pnode_id = ls_input-pnode_id
+              AND version = ls_input-version
+              AND zdel EQ abap_false
+              AND objvers EQ zcl_zgwcaa00000_mpc_ext=>mc_node_status-active.
+            ADD 1 TO lv_cnt.
+            ls_subsection-zsort = ls_subsection-zsort + ( lv_cnt * 10 ).
+
+
+            ls_subsection-objvers = zcl_zgwcaa00000_mpc_ext=>mc_node_status-active."Active data
+            ls_subsection-node_type = zcl_zgwcaa00000_mpc_ext=>mc_node_type-subsection.
+
+            zcl_caz_gw_util=>get_create_timestamp( CHANGING cs_data = ls_subsection ).
+            APPEND ls_subsection TO lt_subsection.
+
+            " subsection이 신규 이므로 title은 무조건 신규
+            LOOP AT <ls_to_subsection>-to_subsection ASSIGNING <ls_subsection_t>.
+              CLEAR ls_subsection_t.
+              ls_subsection_t-node_id = ls_subsection-node_id.
+              ls_subsection_t-version = ls_subsection-version.
+              CALL FUNCTION 'CONVERSION_EXIT_ISOLA_INPUT'
+                EXPORTING
+                  input            = <ls_subsection_t>-spras
+                IMPORTING
+                  output           = ls_subsection_t-spras
+                EXCEPTIONS
+                  unknown_language = 1
+                  OTHERS           = 2.
+              ls_subsection_t-title = <ls_subsection_t>-title.
+              zcl_caz_gw_util=>get_create_timestamp( CHANGING cs_data = ls_subsection_t ).
+              APPEND ls_subsection_t TO lt_subsection_t.
+            ENDLOOP.
+
+          ENDLOOP.
+          IF lt_subsection[] IS NOT INITIAL.
+            INSERT ztcaa00010 FROM TABLE lt_subsection.
+          ENDIF.
+          IF lt_subsection_t[] IS NOT INITIAL.
+            INSERT ztcaa00011 FROM TABLE lt_subsection_t.
+          ENDIF.
+          "$. Endregion 2. subsection수정
+        ENDIF.
+
+        copy_data_to_ref( EXPORTING is_data = ls_input
+                          CHANGING cr_data = er_deep_entity ).
+    ENDCASE.
+  ENDMETHOD.
+  
+  
+  
+  
+  
+  
+  
+  
+  
+    METHOD /iwbep/if_mgw_appl_srv_runtime~execute_action.
+    DATA : lv_node_id TYPE ze_node_id,
+           lv_version TYPE ze_version.
+    CASE iv_action_name.
+      WHEN 'UpdateNodePath'.
+
+        LOOP AT it_parameter ASSIGNING FIELD-SYMBOL(<ls_parameter>).
+          CASE <ls_parameter>-name.
+            WHEN 'NodeId'. lv_node_id = <ls_parameter>-value.
+            WHEN 'Version'. lv_version = <ls_parameter>-value.
+          ENDCASE.
+        ENDLOOP.
+        update_content_path( EXPORTING iv_node_id = lv_node_id
+                                       iv_version = lv_version ).
+    ENDCASE.
+  ENDMETHOD.
+  
+  
+  
+  
+  
+  
+  
+  
+  
+    METHOD /iwbep/if_mgw_core_srv_runtime~changeset_begin.
+**TRY.
+*CALL METHOD SUPER->/IWBEP/IF_MGW_CORE_SRV_RUNTIME~CHANGESET_BEGIN
+*  EXPORTING
+*    IT_OPERATION_INFO   =
+**    it_changeset_input  =
+**    io_changeset_helper =
+**  CHANGING
+**    cv_defer_mode       =
+*    .
+**  CATCH /iwbep/cx_mgw_busi_exception.
+**  CATCH /iwbep/cx_mgw_tech_exception.
+**ENDTRY.
+  ENDMETHOD.
+  
+  
+    METHOD /iwbep/if_mgw_core_srv_runtime~changeset_end.
+**TRY.
+*CALL METHOD SUPER->/IWBEP/IF_MGW_CORE_SRV_RUNTIME~CHANGESET_END
+*    .
+**  CATCH /iwbep/cx_mgw_busi_exception.
+**  CATCH /iwbep/cx_mgw_tech_exception.
+**ENDTRY.
+  ENDMETHOD.
+  
+  
+  
+  
+    METHOD contentlistset_get_entity.
+    DATA : lo_gw_util   TYPE REF TO zcl_caz_gw_util,
+           lv_node_id   TYPE zcl_zgwcaa00010_mpc=>ts_contentlist-node_id,
+           lv_version   TYPE zcl_zgwcaa00010_mpc=>ts_contentlist-version,
+           lv_pnode_id  TYPE zcl_zgwcaa00010_mpc=>ts_contentlist-pnode_id,
+           lv_spras     TYPE zcl_zgwcaa00010_mpc=>ts_contentlist-spras,
+           lv_spras_tmp TYPE char02.
+
+    LOOP AT it_key_tab INTO DATA(ls_key).
+      CASE ls_key-name.
+        WHEN 'NodeId'. lv_node_id = ls_key-value.
+        WHEN 'Version'. er_entity-version = lv_version = ls_key-value.
+        WHEN 'PnodeId'. er_entity-pnode_id = lv_pnode_id = ls_key-value.
+        WHEN 'Spras'. lv_spras_tmp = ls_key-value.
+      ENDCASE.
+    ENDLOOP.
+
+    "언어 key변환
+    CALL FUNCTION 'CONVERSION_EXIT_ISOLA_INPUT'
+      EXPORTING
+        input            = lv_spras_tmp
+      IMPORTING
+        output           = lv_spras
+      EXCEPTIONS
+        unknown_language = 1
+        OTHERS           = 2.
+    er_entity-spras = lv_spras.
+
+    "초기 화면인 경우 첫번째 subsection의 content사용
+    IF lv_node_id IS INITIAL OR lv_node_id = 'DUMMY'.
+      SELECT node_id INTO lv_node_id
+      FROM ztcaa00010
+      WHERE pnode_id = lv_pnode_id
+        AND version = lv_version
+        AND node_type = zcl_zgwcaa00000_mpc_ext=>mc_node_type-subsection
+      ORDER BY zsort ASCENDING.
+        EXIT.
+      ENDSELECT.
+    ENDIF.
+    er_entity-node_id = lv_node_id.
+
+    SELECT SINGLE content
+    INTO er_entity-content
+    FROM ztcaa00030
+    WHERE node_id = lv_node_id
+      AND version = lv_version
+      AND spras = lv_spras.
+  ENDMETHOD.
+  
+  
+  
+  
+    METHOD contentlistset_update_entity.
+    DATA : lv_node_id   TYPE zcl_zgwcaa00010_mpc=>ts_contentlist-node_id,
+           lv_version   TYPE zcl_zgwcaa00010_mpc=>ts_contentlist-version,
+           lv_spras     TYPE zcl_zgwcaa00010_mpc=>ts_contentlist-spras,
+           lv_spras_tmp TYPE char02,
+           ls_entity    TYPE ztcaa00030.
+
+    DATA ls_request_input_data TYPE zcl_zgwcaa00010_mpc=>ts_contentlist.
+
+    LOOP AT it_key_tab INTO DATA(ls_key).
+      CASE ls_key-name.
+        WHEN 'NodeId'. er_entity-node_id = lv_node_id = ls_key-value.
+        WHEN 'Version'. er_entity-version = lv_version = ls_key-value.
+        WHEN 'Spras'. lv_spras_tmp = ls_key-value.
+      ENDCASE.
+    ENDLOOP.
+
+    "언어 key변환
+    CALL FUNCTION 'CONVERSION_EXIT_ISOLA_INPUT'
+      EXPORTING
+        input            = lv_spras_tmp
+      IMPORTING
+        output           = lv_spras
+      EXCEPTIONS
+        unknown_language = 1
+        OTHERS           = 2.
+    er_entity-spras = lv_spras.
+
+    io_data_provider->read_entry_data( IMPORTING es_data = ls_request_input_data ) .
+    MOVE-CORRESPONDING ls_request_input_data TO ls_entity.
+
+    "html tag삭제
+    ls_entity-content_txt = ls_entity-content.
+    zcl_caz_gw_util=>unescape_html( CHANGING cv_str = ls_entity-content_txt ).
+
+    "띄어쓰기 삭제 - 향후 검색 기능에서 사용
+    ls_entity-content_no_gap = ls_entity-content_txt.
+    CONDENSE ls_entity-content_no_gap NO-GAPS.
+    TRANSLATE ls_entity-content_no_gap TO UPPER CASE.
+
+
+    SELECT COUNT( * ) INTO sy-dbcnt
+    FROM ztcaa00030
+    WHERE node_id = lv_node_id
+      AND version = lv_version
+      AND spras = lv_spras.
+
+    IF sy-subrc EQ 0.
+      UPDATE ztcaa00030
+      SET content = ls_entity-content
+          content_txt = ls_entity-content_txt
+          content_no_gap = ls_entity-content_no_gap
+          aenam = sy-uname
+          aedat = sy-datum
+          aezet = sy-uzeit
+       WHERE node_id = lv_node_id
+         AND version = lv_version
+         AND spras = lv_spras.
+    ELSE.
+      zcl_caz_gw_util=>get_create_timestamp( CHANGING cs_data = ls_entity ) .
+      INSERT ztcaa00030 FROM ls_entity.
+    ENDIF.
+
+    IF sy-subrc NE 0.
+      RAISE EXCEPTION TYPE /iwbep/cx_mgw_busi_exception
+        EXPORTING
+          textid  = /iwbep/cx_mgw_busi_exception=>business_error
+          message = zcl_caz_gw_util=>mc_msg_update_err.
+    ENDIF.
+  ENDMETHOD.
+  
+  
+  
+  
+    METHOD nodeset_get_entityset.
+    DATA : lt_entityset TYPE zcl_zgwcaa00010_mpc=>tt_node,
+           ls_entity    TYPE zcl_zgwcaa00010_mpc=>ts_node,
+           lr_version   TYPE RANGE OF zcl_zgwcaa00010_mpc=>ts_node-version,
+           lr_node_id   TYPE RANGE OF zcl_zgwcaa00010_mpc=>ts_node-node_id,
+           lr_pnode_id  TYPE RANGE OF zcl_zgwcaa00010_mpc=>ts_node-pnode_id,
+           lr_spras     TYPE RANGE OF zcl_zgwcaa00010_mpc=>ts_node-spras.
+
+    DATA(lo_filter) = io_tech_request_context->get_filter( ). "filter parameter object
+    DATA(lt_filter_select_options) = lo_filter->get_filter_select_options( ). "filter parameter
+    DATA(lv_top) = io_tech_request_context->get_top( ) + is_paging-skip. "검색 속도 향상을 위한 최대 조회 건수
+
+    LOOP AT lt_filter_select_options INTO DATA(ls_filter). " filter확인
+      CASE ls_filter-property.
+        WHEN 'VERSION'. "filter property의 abap name확인
+          lo_filter->convert_select_option( EXPORTING is_select_option = ls_filter
+                                            IMPORTING et_select_option = lr_version ).
+        WHEN 'PNODE_ID'.
+          lo_filter->convert_select_option( EXPORTING is_select_option = ls_filter
+                                            IMPORTING et_select_option = lr_pnode_id ).
+        WHEN 'NODE_ID'.
+          lo_filter->convert_select_option( EXPORTING is_select_option = ls_filter
+                                            IMPORTING et_select_option = lr_node_id ).
+        WHEN 'SPRAS'.
+          lo_filter->convert_select_option( EXPORTING is_select_option = ls_filter
+                                            IMPORTING et_select_option = lr_spras ).
+      ENDCASE.
+    ENDLOOP.
+
+
+    "호출 종류 확인
+    IF io_tech_request_context->has_count( ). " 반환 entity의 전체 건수만 확인
+      SELECT COUNT( * ) INTO sy-dbcnt
+      FROM zvcaa00010d
+      WHERE node_id IN lr_node_id
+        AND pnode_id IN lr_pnode_id
+        AND version IN lr_version
+        AND spras IN lr_spras
+        AND zdel = abap_false.
+      es_response_context-count = sy-dbcnt.
+    ELSE." 반환 entity의 paging된 데이터확인
+      SELECT *
+      INTO CORRESPONDING FIELDS OF TABLE lt_entityset
+      UP TO lv_top ROWS "현재 page에 맞는 최대 조회 건수
+      FROM zvcaa00010d
+      WHERE node_id IN lr_node_id
+        AND pnode_id IN lr_pnode_id
+        AND version IN lr_version
+        AND spras IN lr_spras
+        AND zdel = abap_false
+      ORDER BY zsort sprast  .
+
+      LOOP AT lt_entityset INTO ls_entity FROM is_paging-skip + 1. "현재 page에 맞는 데이터만 반환(paging)
+        APPEND ls_entity TO et_entityset.
+        CLEAR ls_entity.
+      ENDLOOP.
+    ENDIF.
+  ENDMETHOD.
+  
+  
+  
+  
+  
+  
+  
+  
+    METHOD subsectionset_create_entity.
+*    DATA : ls_request_input_data TYPE zcl_zgwcaa00010_mpc=>ts_subsection.
+*    DATA : ls_data    TYPE ztcaa00010.
+*
+*    io_data_provider->read_entry_data( IMPORTING es_data = ls_request_input_data ).
+*
+*    MOVE-CORRESPONDING ls_request_input_data TO ls_data.
+*    CALL FUNCTION 'GUID_CREATE'
+*      IMPORTING
+*        ev_guid_32 = ls_data-node_id.
+*    ls_data-objvers = mc_node_status-active.
+*    ls_data-node_type = mc_data_status-subsection.
+*    zcl_caz_gw_util=>get_create_timestamp( CHANGING cs_data = ls_data ).
+*    ls_data-rnode_id = zcl_zgwcaa00000_dpc_ext=>get_root_node( EXPORTING iv_node_id = ls_data-pnode_id
+*                                                                         iv_version = ls_data-version ).
+*
+*
+*    INSERT ztcaa00010 FROM ls_data.
+*
+*    IF sy-subrc NE 0.
+*      RAISE EXCEPTION TYPE /iwbep/cx_mgw_busi_exception
+*        EXPORTING
+*          textid  = /iwbep/cx_mgw_busi_exception=>business_error
+*          message = zcl_caz_gw_util=>mc_msg_insert_err.
+*    ELSE.
+*      MOVE-CORRESPONDING ls_data TO er_entity.
+*    ENDIF.
+  ENDMETHOD.
+  
+  
+  
+    METHOD subsectionset_delete_entity.
+    DATA : lo_gw_util TYPE REF TO zcl_caz_gw_util,
+           lv_node_id TYPE zcl_zgwcaa00010_mpc=>ts_subsection-node_id,
+           lv_version TYPE zcl_zgwcaa00010_mpc=>ts_subsection-version.
+
+    LOOP AT it_key_tab INTO DATA(ls_key).
+      CASE ls_key-name.
+        WHEN 'NodeId'. lv_node_id = ls_key-value.
+        WHEN 'Version'. lv_version = ls_key-value.
+      ENDCASE.
+    ENDLOOP.
+
+    "subseciton 삭제
+    UPDATE ztcaa00010
+    SET zdel = abap_true
+        objvers = zcl_zgwcaa00000_mpc_ext=>mc_node_status-history
+        aenam = sy-uname
+        aedat = sy-datum
+        aezet = sy-uzeit
+    WHERE node_id = lv_node_id
+      AND version = lv_version
+      AND node_type = zcl_zgwcaa00000_mpc_ext=>mc_node_type-subsection.
+
+    "subsection 언어별 title삭제
+    UPDATE ztcaa00011
+    SET zdel = abap_true
+        aenam = sy-uname
+        aedat = sy-datum
+        aezet = sy-uzeit
+    WHERE node_id = lv_node_id
+      AND version = lv_version.
+
+    "subsection content삭제
+    UPDATE ztcaa00030
+    SET zdel = abap_true
+        aenam = sy-uname
+        aedat = sy-datum
+        aezet = sy-uzeit
+    WHERE node_id = lv_node_id
+      AND version = lv_version.
+  ENDMETHOD.
+  
+  
+  
+  
+  
+  
+  
+  
+    METHOD subsectionset_get_entityset.
+    DATA : lt_entityset TYPE zcl_zgwcaa00010_mpc=>tt_subsection,
+           ls_entity    TYPE zcl_zgwcaa00010_mpc=>ts_subsection,
+           lr_version   TYPE RANGE OF zcl_zgwcaa00010_mpc=>ts_subsection-version,
+           lr_pnode_id  TYPE RANGE OF zcl_zgwcaa00010_mpc=>ts_subsection-pnode_id,
+           lr_spras     TYPE RANGE OF zcl_zgwcaa00010_mpc=>ts_subsection-spras.
+
+    DATA(lo_filter) = io_tech_request_context->get_filter( ). "filter parameter object
+    DATA(lt_filter_select_options) = lo_filter->get_filter_select_options( ). "filter parameter
+    DATA(lv_top) = io_tech_request_context->get_top( ) + is_paging-skip. "검색 속도 향상을 위한 최대 조회 건수
+
+    LOOP AT lt_filter_select_options INTO DATA(ls_filter). " filter확인
+      CASE ls_filter-property.
+        WHEN 'VERSION'. "filter property의 abap name확인
+          lo_filter->convert_select_option( EXPORTING is_select_option = ls_filter
+                                            IMPORTING et_select_option = lr_version ).
+        WHEN 'PNODE_ID'.
+          lo_filter->convert_select_option( EXPORTING is_select_option = ls_filter
+                                            IMPORTING et_select_option = lr_pnode_id ).
+        WHEN 'SPRAS'.
+          lo_filter->convert_select_option( EXPORTING is_select_option = ls_filter
+                                            IMPORTING et_select_option = lr_spras ).
+      ENDCASE.
+    ENDLOOP.
+
+
+    "호출 종류 확인
+    IF io_tech_request_context->has_count( ). " 반환 entity의 전체 건수만 확인
+      SELECT COUNT( * ) INTO sy-dbcnt
+      FROM zvcaa00010d
+      WHERE pnode_id IN lr_pnode_id
+        AND version IN lr_version
+        AND node_type = zcl_zgwcaa00000_mpc_ext=>mc_node_type-subsection
+        AND spras IN lr_spras
+        AND zdel = abap_false.
+      es_response_context-count = sy-dbcnt.
+    ELSE." 반환 entity의 paging된 데이터확인
+      SELECT *
+      INTO CORRESPONDING FIELDS OF TABLE lt_entityset
+      UP TO lv_top ROWS "현재 page에 맞는 최대 조회 건수
+      FROM zvcaa00010d
+      WHERE pnode_id IN lr_pnode_id
+        AND version IN lr_version
+        AND spras IN lr_spras
+        AND node_type = zcl_zgwcaa00000_mpc_ext=>mc_node_type-subsection
+        AND zdel = abap_false
+      ORDER BY zsort.
+
+
+
+      LOOP AT lt_entityset INTO ls_entity FROM is_paging-skip + 1. "현재 page에 맞는 데이터만 반환(paging)
+        "subsection의 언어별 title가져옴
+        SELECT spras, sprast, title INTO TABLE @DATA(lt_txt)
+        FROM zvcaa00010d
+        WHERE node_id EQ @ls_entity-node_id
+          AND version EQ @ls_entity-version
+        ORDER BY sprast  .
+
+        ls_entity-title_langu = /ui2/cl_json=>serialize( data = lt_txt
+                                                         compress = abap_true
+                                                         pretty_name = /ui2/cl_json=>pretty_mode-camel_case ).
+        APPEND ls_entity TO et_entityset.
+        CLEAR ls_entity.
+      ENDLOOP.
+    ENDIF.
+  ENDMETHOD.
+  
+  
+  
+  
+  
+    METHOD treeset_delete_entity.
+    DATA : lo_gw_util TYPE REF TO zcl_caz_gw_util,
+           lv_node_id TYPE zcl_zgwcaa00010_mpc=>ts_tree-node_id,
+           lv_version TYPE zcl_zgwcaa00010_mpc=>ts_tree-version,
+           lt_del_tab TYPE TABLE OF ztcaa00010,
+           lt_del_fae TYPE TABLE OF ztcaa00010.
+
+    LOOP AT it_key_tab INTO DATA(ls_key).
+      CASE ls_key-name.
+        WHEN 'NodeId'. lv_node_id = ls_key-value.
+        WHEN 'Version'. lv_version = ls_key-value.
+      ENDCASE.
+    ENDLOOP.
+
+    "대상 노드의 현재 상태 확인
+    SELECT SINGLE zdel
+    INTO @DATA(lv_zdel)
+    FROM ztcaa00010
+    WHERE node_id = @lv_node_id
+      AND version = @lv_version.
+
+    IF lv_zdel EQ abap_true. "삭제 상태면 History Data로 변경
+      UPDATE ztcaa00010
+      SET objvers = zcl_zgwcaa00000_mpc_ext=>mc_node_status-history
+          aenam = sy-uname
+          aedat = sy-datum
+          aezet = sy-uzeit
+      WHERE node_id = lv_node_id
+        AND version = lv_version.
+    ELSE. " 사용 상태면 삭제 상태로 변경
+      UPDATE ztcaa00010
+      SET zdel = abap_true
+          aenam = sy-uname
+          aedat = sy-datum
+          aezet = sy-uzeit
+      WHERE node_id = lv_node_id
+        AND version = lv_version.
+
+      "하위 노드들도 삭제 상태로 변경
+      update_child_node_status( EXPORTING iv_node_id = lv_node_id
+                                          iv_version = lv_version
+                                          iv_zdel = abap_true
+                                          iv_objvers = zcl_zgwcaa00000_mpc_ext=>mc_node_status-history ).
+
+    ENDIF.
+
+  ENDMETHOD.
+  
+  
+  
+  
+  
+  
+  
+    METHOD treeset_get_entity.
+    DATA : lo_gw_util   TYPE REF TO zcl_caz_gw_util,
+           lv_node_id   TYPE zcl_zgwcaa00010_mpc=>ts_tree-node_id,
+           lv_version   TYPE zcl_zgwcaa00010_mpc=>ts_tree-version,
+           lv_spras     TYPE zcl_zgwcaa00010_mpc=>ts_tree-spras,
+           lv_spras_tmp TYPE char02.
+    LOOP AT it_key_tab INTO DATA(ls_key).
+      CASE ls_key-name.
+        WHEN 'NodeId'. er_entity-node_id = lv_node_id = ls_key-value.
+        WHEN 'Version'. er_entity-version = lv_version = ls_key-value.
+        WHEN 'Spras'. lv_spras_tmp = ls_key-value.
+      ENDCASE.
+    ENDLOOP.
+
+    CALL FUNCTION 'CONVERSION_EXIT_ISOLA_INPUT'
+      EXPORTING
+        input            = lv_spras_tmp
+      IMPORTING
+        output           = lv_spras
+      EXCEPTIONS
+        unknown_language = 1
+        OTHERS           = 2.
+    er_entity-spras = lv_spras.
+
+    SELECT SINGLE *
+    INTO CORRESPONDING FIELDS OF er_entity
+    FROM zvcaa00010d
+    WHERE node_id = lv_node_id
+      AND version = lv_version
+      AND spras = lv_spras.
+
+    er_entity-node_path = zcl_zgwcaa00000_dpc_ext=>get_node_path( EXPORTING iv_node_id = er_entity-node_id
+                                                                            iv_version = er_entity-version
+                                                                            iv_spras = lv_spras ).
+  ENDMETHOD.
+  
+  
+  
+  
+  
+  
+  
+    METHOD treeset_get_entityset.
+    DATA : lo_gw_util   TYPE REF TO zcl_caz_gw_util,
+           lv_pnode_id  TYPE zcl_zgwcaa00010_mpc=>ts_tree-pnode_id,
+           lv_node_id   TYPE zcl_zgwcaa00010_mpc=>ts_tree-node_id,
+           lv_spras     TYPE zcl_zgwcaa00010_mpc=>ts_tree-spras,
+           ls_spras_tmp TYPE char02,
+           lv_level     TYPE zcl_zgwcaa00010_mpc=>ts_tree-zlevel,
+           ls_entity    TYPE zcl_zgwcaa00010_mpc=>ts_tree,
+           lv_version   TYPE ztcaa00010-version,
+           lv_subrc     TYPE sy-subrc.
+
+    lo_gw_util = NEW zcl_caz_gw_util( it_filter_select_options = it_filter_select_options ).
+
+
+    lv_pnode_id = lo_gw_util->get_single_filter_value( 'PnodeId' ).
+    lv_version = lo_gw_util->get_single_filter_value( 'Version' ).
+    ls_spras_tmp = lo_gw_util->get_single_filter_value( 'Spras' ).
+    lv_level = lo_gw_util->get_single_filter_value( EXPORTING iv_property = 'Zlevel'
+                                                      IMPORTING ev_subrc = lv_subrc ).
+    IF lv_version IS INITIAL.
+      zcl_zgwcaa00000_dpc_ext=>get_last_version( CHANGING cv_version = lv_version ).
+    ENDIF.
+    IF ls_spras_tmp IS INITIAL.
+      lv_spras = sy-langu.
+    ELSE.
+      CALL FUNCTION 'CONVERSION_EXIT_ISOLA_INPUT'
+        EXPORTING
+          input            = ls_spras_tmp
+        IMPORTING
+          output           = lv_spras
+        EXCEPTIONS
+          unknown_language = 1
+          OTHERS           = 2.
+    ENDIF.
+
+    SELECT *
+    INTO TABLE @DATA(lt_data)
+    FROM zvcaa00010d
+    WHERE version = @lv_version
+      AND spras = @lv_spras
+      AND pnode_id = @lv_pnode_id
+      AND node_type NE @zcl_zgwcaa00000_mpc_ext=>mc_node_type-subsection
+    ORDER BY zsort.
+
+    LOOP AT lt_data ASSIGNING FIELD-SYMBOL(<ls_data>).
+      CLEAR ls_entity.
+      MOVE-CORRESPONDING <ls_data> TO ls_entity.
+      APPEND ls_entity TO et_entityset.
+    ENDLOOP.
+
+    LOOP AT et_entityset ASSIGNING FIELD-SYMBOL(<ls_entity>).
+      <ls_entity>-node_path = zcl_zgwcaa00000_dpc_ext=>get_node_path( EXPORTING iv_node_id = <ls_entity>-node_id
+                                                                                iv_version = <ls_entity>-version
+                                                                                iv_spras = <ls_entity>-spras ).
+    ENDLOOP.
+
+    es_response_context-inlinecount = lines( et_entityset ) .
+  ENDMETHOD.
+  
+  
+  
+  
+  
+  
+  
+    METHOD treeset_update_entity.
+    DATA : lv_node_id        TYPE zcl_zgwcaa00010_mpc=>ts_tree-node_id,
+           lv_target_node_id TYPE zcl_zgwcaa00010_mpc=>ts_tree-node_id,
+           lv_version        TYPE zcl_zgwcaa00010_mpc=>ts_tree-version,
+           ls_entity         TYPE ztcaa00010,
+           ls_target_node    TYPE ztcaa00010,
+           lv_error          TYPE flag.
+    DATA ls_request_input_data TYPE zcl_zgwcaa00010_mpc=>ts_tree.
+
+    LOOP AT it_key_tab INTO DATA(ls_key).
+      CASE ls_key-name.
+        WHEN 'NodeId'. er_entity-node_id = lv_node_id = ls_key-value.
+        WHEN 'Version'. er_entity-version = lv_version = ls_key-value.
+      ENDCASE.
+    ENDLOOP.
+
+    io_data_provider->read_entry_data( IMPORTING es_data = ls_request_input_data ) .
+    lv_target_node_id = ls_request_input_data-pnode_id."pnode_id를 target_node_id로 전용하여 전달받음
+
+    "Source node확인
+    SELECT SINGLE * INTO CORRESPONDING FIELDS OF ls_entity
+    FROM ztcaa00010
+    WHERE node_id = lv_node_id
+      AND version = lv_version.
+
+    ls_entity-objvers = zcl_zgwcaa00000_mpc_ext=>mc_node_status-active.
+
+    CASE ls_request_input_data-node_state.
+      WHEN 'MOVEON'.
+        "leaf노드 하위로는 이동금지
+        SELECT SINGLE * INTO CORRESPONDING FIELDS OF ls_target_node
+          FROM ztcaa00010
+          WHERE node_id = lv_target_node_id
+          AND version = lv_version.
+
+        IF ls_target_node-node_type EQ zcl_zgwcaa00000_mpc_ext=>mc_node_type-leaf.
+          EXIT.
+        ENDIF.
+
+        "Target이되는 노드가 이동 가능한 상태의 노드인지 확인
+        CHECK is_node_move_available( EXPORTING iv_target_node_id = lv_target_node_id
+                                                iv_node_id = lv_node_id ).
+        "같은 부모로는 이동 취소
+        SELECT SINGLE pnode_id INTO @DATA(lv_pnode_id)
+          FROM ztcaa00010
+          WHERE node_id = @lv_node_id
+           AND version = @lv_version.
+
+        IF lv_pnode_id = lv_target_node_id.
+          EXIT.
+        ENDIF.
+
+        " Target node 하위의 노드들중 정렬순서 마직막에 10 더하기
+        SELECT MAX( zsort ) INTO ls_entity-zsort
+        FROM ztcaa00010
+        WHERE pnode_id = lv_target_node_id
+          AND version = lv_version.
+
+        ADD 10 TO ls_entity-zsort.
+        ls_entity-zlevel = ls_target_node-zlevel + 1.
+        ls_entity-pnode_id = ls_target_node-node_id.
+        ls_entity-rnode_id = ls_target_node-rnode_id."target node의 root노드로 변경
+        zcl_caz_gw_util=>get_change_timestamp( CHANGING cs_data = ls_entity ) .
+        MODIFY ztcaa00010 FROM ls_entity.
+      WHEN 'MOVEBEFORE'.
+        "Target이되는 노드가 이동 가능한 상태의 노드인지 확인
+        CHECK is_node_move_available( EXPORTING iv_target_node_id = lv_target_node_id
+                                                iv_node_id = lv_node_id ).
+
+        "target node의 정보 가져옴
+        SELECT SINGLE * INTO CORRESPONDING FIELDS OF ls_target_node
+          FROM ztcaa00010
+          WHERE node_id = lv_target_node_id
+          AND version = lv_version.
+
+        "target node와 동일한 부모 노드를 가지는 노드들의 정렬순서를 10씩 증가
+        UPDATE ztcaa00010
+        SET zsort = zsort + 10
+        WHERE pnode_id = ls_target_node-pnode_id
+          AND zsort >= ls_target_node-zsort
+          AND version = lv_version.
+
+        ls_entity-zlevel = ls_target_node-zlevel.
+        ls_entity-pnode_id = ls_target_node-pnode_id.
+        ls_entity-zsort = ls_target_node-zsort.
+        ls_entity-rnode_id = ls_target_node-rnode_id."target node의 root노드로 변경
+        zcl_caz_gw_util=>get_change_timestamp( CHANGING cs_data = ls_entity ).
+        MODIFY ztcaa00010 FROM ls_entity.
+      WHEN 'MOVEAFTER'.
+        "Target이되는 노드가 이동 가능한 상태의 노드인지 확인
+        CHECK is_node_move_available( EXPORTING iv_target_node_id = lv_target_node_id
+                                                iv_node_id = lv_node_id ).
+
+        "target node의 정보 가져옴
+        SELECT SINGLE * INTO CORRESPONDING FIELDS OF ls_target_node
+          FROM ztcaa00010
+          WHERE node_id = lv_target_node_id
+          AND version = lv_version.
+
+        "target node와 동일한 부모 노드를 가지는 노드들의 정렬순서를 10씩 감소
+        UPDATE ztcaa00010
+        SET zsort = zsort - 10
+        WHERE pnode_id = ls_target_node-pnode_id
+          AND zsort <= ls_target_node-zsort
+          AND version = lv_version.
+
+        ls_entity-zlevel = ls_target_node-zlevel.
+        ls_entity-pnode_id = ls_target_node-pnode_id.
+        ls_entity-zsort = ls_target_node-zsort.
+        ls_entity-rnode_id = ls_target_node-rnode_id."target node의 root노드로 변경
+        zcl_caz_gw_util=>get_change_timestamp( CHANGING cs_data = ls_entity ).
+        MODIFY ztcaa00010 FROM ls_entity.
+      WHEN 'RECOVER'.
+        UPDATE ztcaa00010
+        SET zdel = abap_false
+            aenam = sy-uname
+            aedat = sy-datum
+            aezet = sy-uzeit
+        WHERE node_id = ls_entity-node_id
+          AND version = lv_version
+          AND objvers = zcl_zgwcaa00000_mpc_ext=>mc_node_status-active. "Active data
+
+        "하위 노드들도 상태 변경
+        update_child_node_status( EXPORTING iv_node_id = ls_entity-node_id
+                                            iv_version = lv_version
+                                            iv_zdel = abap_false
+                                            iv_objvers = zcl_zgwcaa00000_mpc_ext=>mc_node_status-active ).
+
+    ENDCASE.
+  ENDMETHOD.
+  
+  
+  
+    METHOD versionlistset_get_entityset.
+    SELECT version title INTO CORRESPONDING FIELDS OF TABLE et_entityset
+    FROM ztcaa00020
+    WHERE zdel EQ abap_false
+    ORDER BY zsort DESCENDING.
+  ENDMETHOD.
+  
+  
+  
+  
+    METHOD update_content_path.
+
+    SELECT node_id, version, spras
+    INTO TABLE @DATA(lt_tab)
+    FROM ztcaa00011
+    WHERE node_id = @iv_node_id
+      AND version = @iv_version.
+
+    "노드 path재 설정
+    LOOP AT lt_tab ASSIGNING FIELD-SYMBOL(<ls_tab>).
+      DATA(lv_path) = zcl_zgwcaa00000_dpc_ext=>get_node_path( EXPORTING iv_node_id = <ls_tab>-node_id
+                                                                        iv_version = <ls_tab>-version
+                                                                        iv_spras = <ls_tab>-spras
+                                                                        iv_reset = abap_true ).
+      UPDATE ztcaa00030
+      SET content_path = lv_path
+      WHERE node_id = <ls_tab>-node_id
+        AND version = <ls_tab>-version
+        AND spras = <ls_tab>-spras .
+
+      "하위 노드 path 재 설정
+      SELECT node_id, version INTO TABLE @DATA(lt_child)
+      FROM ztcaa00010
+      WHERE pnode_id = @<ls_tab>-node_id
+        AND version = @<ls_tab>-version.
+
+      LOOP AT lt_child ASSIGNING FIELD-SYMBOL(<ls_child>).
+        update_content_path( EXPORTING iv_node_id = <ls_child>-node_id
+                                       iv_version = <ls_child>-version ).
+      ENDLOOP.
+    ENDLOOP.
+
+  ENDMETHOD.
+  
+  
+  
+  
+  
+    METHOD is_node_move_available.
+    DATA : lv_pnode_id TYPE zcl_zgwcaa00010_mpc=>ts_node-node_id,
+           lv_try      TYPE flag,
+           lv_cnt      TYPE i.
+    CLEAR lv_cnt.
+
+
+    IF iv_node_id EQ iv_target_node_id.
+      rv_flag = abap_false.
+      EXIT.
+    ENDIF.
+
+    lv_try = abap_true.
+    lv_pnode_id = iv_target_node_id.
+    WHILE lv_try EQ abap_true." 50번까지 반복하면서 target node의 부모노드들을 찾아가면 이동가능한지 확인
+      ADD 1 TO lv_cnt.
+
+      "target node가 사용 가능한 node인지 확인, root노드가 아닌지 확인
+      SELECT SINGLE pnode_id
+      INTO lv_pnode_id
+      FROM ztcaa00010
+      WHERE node_id = lv_pnode_id
+        AND zdel = abap_false
+        AND objvers = zcl_zgwcaa00000_mpc_ext=>mc_node_status-active
+        AND pnode_id <> ''.
+
+      IF sy-subrc EQ 0.
+        IF lv_pnode_id = iv_node_id. "source랑 target이랑 같으면 이동 불가
+          rv_flag = abap_false.
+          lv_try = abap_false.
+          EXIT.
+        ENDIF.
+      ELSE.
+        lv_try = abap_false. "target node가 사용 불가능 한 상태이면 이동 불가
+        EXIT.
+      ENDIF.
+      IF lv_cnt > 50. " 무한루프 방지
+        lv_try = abap_false.
+        EXIT.
+      ENDIF.
+    ENDWHILE.
+    rv_flag = abap_true.
+
+  ENDMETHOD.
+  
+  
+  
+    METHOD update_child_node_status.
+
+    "노드 id를 부모로 가지는 자직 노드들 검색
+    SELECT node_id, node_type INTO TABLE @DATA(lt_node)
+    FROM ztcaa00010
+    WHERE pnode_id = @iv_node_id
+      AND version = @iv_version.
+
+    LOOP AT lt_node ASSIGNING FIELD-SYMBOL(<ls_node>).
+      "자식 노드의 상태 변경
+      UPDATE ztcaa00010
+      SET zdel = iv_zdel
+          aenam = sy-uname
+          aedat = sy-datum
+          aezet = sy-uzeit
+      WHERE node_id = <ls_node>-node_id
+        AND version = iv_version.
+
+      "하위 노드가 subsection이면 content도 상태 변경
+      IF <ls_node>-node_type EQ zcl_zgwcaa00000_mpc_ext=>mc_node_type-subsection.
+        UPDATE ztcaa00030
+        SET zdel = iv_zdel
+            aenam = sy-uname
+            aedat = sy-datum
+            aezet = sy-uzeit
+        WHERE node_id = <ls_node>-node_id
+          AND version = iv_version.
+      ENDIF.
+
+      update_child_node_status( EXPORTING iv_node_id = <ls_node>-node_id
+                                          iv_version = iv_version
+                                          iv_zdel = iv_zdel
+                                          iv_objvers = iv_objvers ).
+    ENDLOOP.
+
+
+  ENDMETHOD.
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  

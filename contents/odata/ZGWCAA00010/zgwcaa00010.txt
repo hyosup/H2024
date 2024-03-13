@@ -1,0 +1,70 @@
+ContentList			0		@SL\QLabel Editor@		0	0					
+F4NodeType			0		@SL\QLabel Editor@		0	0					
+Node			0		@SL\QLabel Editor@		0	0					
+SubSection			0		@SL\QLabel Editor@		0	0					
+Tree			0		@SL\QLabel Editor@		0	0					
+VersionList			0		@SL\QLabel Editor@		0	0					
+
+
+
+NodeId	1	Edm.String	0	0	32		0	0	0	0	0	Node ID	@SL\QLabel Editor@		NODE_ID	@HO\QABAP Type Editor@	
+Version	1	Edm.String	0	0	20		0	0	0	0	0	Version	@SL\QLabel Editor@		VERSION	@HO\QABAP Type Editor@	
+PnodeId	1	Edm.String	0	0	32		0	0	0	0	0	Parent Node ID	@SL\QLabel Editor@		PNODE_ID	@HO\QABAP Type Editor@	
+Spras	1	Edm.String	0	0	2		0	0	0	0	0	Language	@SL\QLabel Editor@		SPRAS	@HO\QABAP Type Editor@	
+Content	0	Edm.String	0	0	0		0	0	0	0	0	RTE Content	@SL\QLabel Editor@		CONTENT	@HO\QABAP Type Editor@	
+
+
+
+NodeType	1	Edm.String	0	0	10		0	0	0	0	0	Lower Value	@SL\QLabel Editor@		DOMVALUE_L	@HO\QABAP Type Editor@	
+TypeText	0	Edm.String	0	0	60		0	0	0	0	0	Short Descript.	@SL\QLabel Editor@		DDTEXT	@HO\QABAP Type Editor@	
+Domname	0	Edm.String	0	0	30		0	0	0	0	0	Domain	@SL\QLabel Editor@		DOMNAME	@HO\QABAP Type Editor@	
+
+
+
+NodeId	1	Edm.String	0	0	32		0	0	0	0	0	Node ID	@SL\QLabel Editor@		NODE_ID	@HO\QABAP Type Editor@	
+Version	1	Edm.String	0	0	20		0	0	0	0	0	Version	@SL\QLabel Editor@		VERSION	@HO\QABAP Type Editor@	
+Spras	1	Edm.String	0	0	2		0	0	0	0	0	Language	@SL\QLabel Editor@		SPRAS	@HO\QABAP Type Editor@	
+Sprast	0	Edm.String	0	0	0		0	0	0	0	0	Language	@SL\QLabel Editor@		SPRAST	@HO\QABAP Type Editor@	
+Zsort	0	Edm.Int32	0	0	10		0	0	0	0	0	Sort order	@SL\QLabel Editor@		ZSORT	@HO\QABAP Type Editor@	
+PnodeId	0	Edm.String	0	0	32		0	0	0	0	0	Parent Node ID	@SL\QLabel Editor@		PNODE_ID	@HO\QABAP Type Editor@	
+Zlevel	0	Edm.String	0	0	2		0	0	0	0	0	ZLEVEL	@SL\QLabel Editor@		ZLEVEL	@HO\QABAP Type Editor@	
+NodeType	0	Edm.String	0	0	15		0	0	0	0	0	Node Type	@SL\QLabel Editor@		NODE_TYPE	@HO\QABAP Type Editor@	
+Title	0	Edm.String	0	0	0		0	0	0	0	0	Title	@SL\QLabel Editor@		TITLE	@HO\QABAP Type Editor@	
+NodeState	0	Edm.String	0	0	0		0	0	0	0	0	NodeState	@SL\QLabel Editor@		NODE_STATE	@HO\QABAP Type Editor@	
+NodePath	0	Edm.String	0	0	0		0	0	0	0	0	NodePath	@SL\QLabel Editor@		NODE_PATH	@HO\QABAP Type Editor@	
+Zdel	0	Edm.Boolean	0	0	0		0	0	0	0	0	Delete Flag	@SL\QLabel Editor@		ZDEL	@HO\QABAP Type Editor@	
+
+
+
+NodeId	1	Edm.String	0	0	32		0	0	0	0	0	Node ID	@SL\QLabel Editor@		NODE_ID	@HO\QABAP Type Editor@	
+Version	1	Edm.String	0	0	20		0	0	0	0	0	Version	@SL\QLabel Editor@		VERSION	@HO\QABAP Type Editor@	
+Spras	1	Edm.String	0	0	2		0	0	0	0	0	Language	@SL\QLabel Editor@		SPRAS	@HO\QABAP Type Editor@	
+Zsort	0	Edm.Int32	0	0	10		0	0	0	0	0	Sort order	@SL\QLabel Editor@		ZSORT	@HO\QABAP Type Editor@	
+PnodeId	0	Edm.String	0	0	32		0	0	0	0	0	Parent Node ID	@SL\QLabel Editor@		PNODE_ID	@HO\QABAP Type Editor@	
+Title	0	Edm.String	0	0	0		0	0	0	0	0	Title	@SL\QLabel Editor@		TITLE	@HO\QABAP Type Editor@	
+TitleLangu	0	Edm.String	0	0	0		0	0	0	0	0	Title	@SL\QLabel Editor@		TITLE_LANGU	@HO\QABAP Type Editor@	
+
+
+
+NodeId	1	Edm.String	0	0	32		0	0	0	0	0	Node ID	@SL\QLabel Editor@		NODE_ID	@HO\QABAP Type Editor@	
+Version	1	Edm.String	0	0	20		0	0	0	0	0	Version	@SL\QLabel Editor@		VERSION	@HO\QABAP Type Editor@	
+Spras	1	Edm.String	0	0	2		0	0	0	0	0	Language	@SL\QLabel Editor@		SPRAS	@HO\QABAP Type Editor@	
+Zsort	0	Edm.Int32	0	0	10		0	0	0	0	0	Sort order	@SL\QLabel Editor@		ZSORT	@HO\QABAP Type Editor@	
+PnodeId	0	Edm.String	0	0	32		0	0	0	0	0	Parent Node ID	@SL\QLabel Editor@		PNODE_ID	@HO\QABAP Type Editor@	
+Zlevel	0	Edm.String	0	0	2		0	0	0	0	0	ZLEVEL	@SL\QLabel Editor@		ZLEVEL	@HO\QABAP Type Editor@	
+NodeType	0	Edm.String	0	0	15		0	0	0	0	0	Node Type	@SL\QLabel Editor@		NODE_TYPE	@HO\QABAP Type Editor@	
+Title	0	Edm.String	0	0	0		0	0	0	0	0	Title	@SL\QLabel Editor@		TITLE	@HO\QABAP Type Editor@	
+Zdel	0	Edm.Boolean	0	0	0		0	0	0	0	0	Delete Flag	@SL\QLabel Editor@		ZDEL	@HO\QABAP Type Editor@	
+NodeState	0	Edm.String	0	0	0		0	0	0	0	0	NodeState	@SL\QLabel Editor@		NODE_STATE	@HO\QABAP Type Editor@	
+NodePath	0	Edm.String	0	0	0		0	0	0	0	0	NodePath	@SL\QLabel Editor@		NODE_PATH	@HO\QABAP Type Editor@	
+
+
+Version	1	Edm.String	0	0	20		0	0	0	0	0	Version	@SL\QLabel Editor@		VERSION	@HO\QABAP Type Editor@	
+Zdesc	0	Edm.String	0	0	0		0	0	0	0	0	RTE Content	@SL\QLabel Editor@		ZDESC	@HO\QABAP Type Editor@	
+Title	0	Edm.String	0	0	0		0	0	0	0	0	Title	@SL\QLabel Editor@		TITLE	@HO\QABAP Type Editor@	
+
+
+
+SubSection_SubSection		SubSection	0	SubSection	M		@SL\QLabel Editor@
+Tree_Node		Tree	0	Node	N		@SL\QLabel Editor@
+Tree_SubSection		Tree	0	SubSection	M		@SL\QLabel Editor@

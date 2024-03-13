@@ -1,0 +1,1 @@
+sap.ui.define(["hkmcca/zucaa00010/controller/List.controller"],function(t){"use strict";QUnit.module("List Controller");QUnit.test("I should test the List controller",function(n){var o=new t;o.onInit();n.ok(o)})});
