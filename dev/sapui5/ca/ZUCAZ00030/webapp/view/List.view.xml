@@ -1,0 +1,58 @@
+<!-- 
+********************************************************************************************************
+* Change History
+*_______________________________________________________________________________________________________
+*   Ver. No       Change Date        Writer             Request No.              
+*   Description
+*_______________________________________________________________________________________________________
+*   1             2022.12.09         GICSDV05           [요구사항 번호]                       
+*   최초 개발
+******************************************************************************************************** 
+-->
+<mvc:View controllerName="hkmc.ca.zucaz00030.controller.List"
+    xmlns:core="sap.ui.core"
+    xmlns:mvc="sap.ui.core.mvc" displayBlock="true"
+    xmlns="sap.m"
+    xmlns:sv="sap.ui.comp.smartvariants"
+    xmlns:smartFilterBar="sap.ui.comp.smartfilterbar"
+    xmlns:smartTable="sap.ui.comp.smarttable"
+    xmlns:f="sap.f"
+    >
+    <f:DynamicPage showFooter="false">
+        <f:title>
+        <f:DynamicPageTitle>
+        <f:heading>
+            <sv:SmartVariantManagement id="idSmartVariant" showShare="true" persistencyKey="SmartFilter_Variant"
+                                      showExecuteOnSelection="true" />
+        </f:heading>
+            </f:DynamicPageTitle>
+        </f:title>
+        <f:header>
+            <f:DynamicPageHeader>
+                <f:content>
+                    <smartFilterBar:SmartFilterBar id="idSmartFilterBar" useToolbar="false" smartVariant="idSmartVariant"
+                                                    entitySet="ZVCAZ00010_DDL" persistencyKey="SmartFilter_Explored" />
+                </f:content>
+            </f:DynamicPageHeader>
+        </f:header>
+        <f:content>
+            <smartTable:SmartTable id="idSmartTable" entitySet="ZVCAZ00010_DDL" smartFilterId="idSmartFilterBar"
+                 smartVariant="idSmartVariant"
+                header="{i18n>listHeaderTitle}" tableType="ResponsiveTable" enableAutoBinding="true"
+                class="sapUiResponsiveContentPadding" demandPopin="true" beforeRebindTable="onBeforeRebindTable">
+                <smartTable:customToolbar>
+                    <Toolbar>
+                        <ToolbarSpacer/>
+                        <Button icon="sap-icon://add" text="{i18n>btnNew}" press="handleNew" type="Transparent" visible="{viewConfig>/isAuth}"/>
+                    </Toolbar>
+                </smartTable:customToolbar>
+                <smartTable:items>
+                    <Table growing="true" growingScrollToLoad="true" fixedLayout="false" itemPress="handleItemPress"
+                            mode="SingleSelectMaster">
+                        <ColumnListItem type="Navigation" />
+                    </Table>
+                </smartTable:items>
+            </smartTable:SmartTable>
+        </f:content>
+    </f:DynamicPage>
+</mvc:View>

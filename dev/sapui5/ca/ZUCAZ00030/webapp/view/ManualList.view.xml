@@ -1,0 +1,49 @@
+<!-- 
+********************************************************************************************************
+* Change History
+*_______________________________________________________________________________________________________
+*   Ver. No       Change Date        Writer             Request No.              
+*   Description
+*_______________________________________________________________________________________________________
+*   1             2022.12.09         GICSDV05           [요구사항 번호]                       
+*   최초 개발
+******************************************************************************************************** 
+-->
+<mvc:View
+	controllerName="hkmc.ca.zucaz00030.controller.ManualList"
+	xmlns:core="sap.ui.core"
+	xmlns:mvc="sap.ui.core.mvc"
+	displayBlock="true"
+	xmlns="sap.m"
+>
+	<Page
+		id="page"
+		title="{i18n>manualtitle}"
+	>
+		<content>
+			<List
+				id="idList"
+				items="{/ZVCAZ00010_DDL}"
+				itemPress="handleItemPress"
+				mode="SingleSelectMaster"
+			>
+				<items>
+					<StandardListItem
+						type="Navigation"
+						title="{Title}"
+						description="{
+							parts: [{
+								path: 'Objid'
+							}, {
+								path: 'Subobjid'
+							}],
+							formatter: '.formatter.formatSemanticAction'
+						}"
+						infoStateInverted="true"
+						adaptTitleSize="false"
+					/>
+				</items>
+			</List>
+		</content>
+	</Page>
+</mvc:View>

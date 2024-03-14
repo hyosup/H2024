@@ -1,0 +1,31 @@
+<!-- 
+********************************************************************************************************
+* Change History
+*_______________________________________________________________________________________________________
+*   Ver. No       Change Date        Writer             Request No.              
+*   Description
+*_______________________________________________________________________________________________________
+*   1             2022.12.09         GICSDV05           [요구사항 번호]                       
+*   최초 개발
+******************************************************************************************************** 
+-->
+<core:FragmentDefinition
+	xmlns="sap.m"
+	xmlns:core="sap.ui.core"
+	xmlns:smartForm="sap.ui.comp.smartform"
+	xmlns:smartField="sap.ui.comp.smartfield"
+>
+	<smartForm:SmartForm id="idForm" editable="{viewConfig>/isEdit}">
+		<smartForm:Group>
+			<smartForm:GroupElement>
+				<smartField:SmartField value="{Objid}" />
+			</smartForm:GroupElement>
+			<smartForm:GroupElement>
+				<smartField:SmartField value="{Subobjid}" />
+			</smartForm:GroupElement>  
+			<smartForm:GroupElement>
+				<smartField:SmartField value="{Title}" />
+			</smartForm:GroupElement>
+		</smartForm:Group>
+	</smartForm:SmartForm>
+</core:FragmentDefinition>

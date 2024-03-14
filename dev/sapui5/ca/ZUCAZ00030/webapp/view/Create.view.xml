@@ -1,0 +1,86 @@
+<!-- 
+********************************************************************************************************
+* Change History
+*_______________________________________________________________________________________________________
+*   Ver. No       Change Date        Writer             Request No.              
+*   Description
+*_______________________________________________________________________________________________________
+*   1             2022.12.09         GICSDV05           [요구사항 번호]                       
+*   최초 개발
+******************************************************************************************************** 
+-->
+<mvc:View
+	controllerName="hkmc.ca.zucaz00030.controller.Create"
+	xmlns:mvc="sap.ui.core.mvc"
+	xmlns="sap.m"
+	xmlns:core="sap.ui.core"
+	xmlns:uxap="sap.uxap"	
+>
+	<uxap:ObjectPageLayout
+		showFooter="true"
+		enableLazyLoading="true"
+		showTitleInHeaderContent="true"
+	>
+		<uxap:headerTitle>
+			<uxap:ObjectPageDynamicHeaderTitle>
+				<uxap:expandedHeading>
+					<Title text="{i18n>newTitle}"/>
+				</uxap:expandedHeading>
+				<uxap:snappedHeading>
+					<Title text="{i18n>newTitle}"/>
+				</uxap:snappedHeading>
+			</uxap:ObjectPageDynamicHeaderTitle>
+		</uxap:headerTitle>
+		<uxap:sections>
+			<uxap:ObjectPageSection
+				titleUppercase="false"
+				title="{i18n>infoInputTitle}"
+			>
+				<uxap:subSections>
+					<uxap:ObjectPageSubSection title="">
+						<core:Fragment
+							fragmentName="hkmc.ca.zucaz00030.view.fragment.InfoForm"
+							type="XML"
+						/>
+					</uxap:ObjectPageSubSection>
+				</uxap:subSections>
+			</uxap:ObjectPageSection>
+			<uxap:ObjectPageSection
+				titleUppercase="false"
+				title="{i18n>detailTitle}"
+			>
+				<uxap:subSections>
+					<uxap:ObjectPageSubSection title="">
+						<VBox id="idRTEDetailCreateContainer"/>
+					</uxap:ObjectPageSubSection>
+				</uxap:subSections>
+			</uxap:ObjectPageSection>
+			<uxap:ObjectPageSection
+				titleUppercase="false"
+				title="{i18n>attachTitle}"
+			>
+				<uxap:subSections>
+					<uxap:ObjectPageSubSection title="">
+						<VBox id="idUploadSetContainer"/>
+					</uxap:ObjectPageSubSection>
+				</uxap:subSections>
+			</uxap:ObjectPageSection>
+		</uxap:sections>
+		<uxap:footer>
+			<Bar>
+				<contentRight>
+					<Button
+						text="{i18n>btnSave}"
+						press="handleSave"
+						type="Emphasized"
+					/>
+					<Button
+						text="{i18n>btnCancel}"
+						press="handleCancel"
+						type="Transparent"
+					/>
+				</contentRight>
+			</Bar>
+		</uxap:footer>
+	</uxap:ObjectPageLayout>
+</mvc:View>

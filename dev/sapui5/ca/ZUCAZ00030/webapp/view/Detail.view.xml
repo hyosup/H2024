@@ -1,0 +1,102 @@
+<!-- 
+********************************************************************************************************
+* Change History
+*_______________________________________________________________________________________________________
+*   Ver. No       Change Date        Writer             Request No.              
+*   Description
+*_______________________________________________________________________________________________________
+*   1             2022.12.09         GICSDV05           [요구사항 번호]                       
+*   최초 개발
+******************************************************************************************************** 
+-->
+<mvc:View
+	controllerName="hkmc.ca.zucaz00030.controller.Detail"
+	xmlns:mvc="sap.ui.core.mvc"
+	xmlns="sap.m"
+	xmlns:core="sap.ui.core"
+	xmlns:uxap="sap.uxap"	
+>
+	<uxap:ObjectPageLayout
+		showFooter="{viewConfig>/isEdit}"
+		enableLazyLoading="true"
+		showTitleInHeaderContent="true"
+	>
+		<uxap:headerTitle>
+			<uxap:ObjectPageDynamicHeaderTitle>
+				<uxap:expandedHeading>
+					<Title text="{Title}"/>
+				</uxap:expandedHeading>
+				<uxap:snappedHeading>
+					<Title text="{Title}"/>
+				</uxap:snappedHeading>
+				<uxap:actions>
+					<Button
+						text="{i18n>btnEdit}"
+						type="Transparent"
+						press="handleEdit"
+						visible="{= ${viewConfig>/isAuth}?!${viewConfig>/isEdit}:false}"
+					/>
+					<Button
+						text="{i18n>btnDelete}"
+						type="Emphasized"
+						press="handleDelete"
+						visible="{= ${viewConfig>/isAuth}?!${viewConfig>/isEdit}:false}"
+					/>
+				</uxap:actions>
+			</uxap:ObjectPageDynamicHeaderTitle>
+		</uxap:headerTitle>
+		<uxap:sections>
+			<uxap:ObjectPageSection
+				titleUppercase="false"
+				title="{i18n>infoInputTitle}"
+			>
+				<uxap:subSections>
+					<uxap:ObjectPageSubSection title="">
+						<core:Fragment
+							fragmentName="hkmc.ca.zucaz00030.view.fragment.InfoForm"
+							type="XML"
+						/>
+					</uxap:ObjectPageSubSection>
+				</uxap:subSections>
+			</uxap:ObjectPageSection>
+			<uxap:ObjectPageSection
+				titleUppercase="false"
+				title="{i18n>detailTitle}"
+			>
+				<uxap:subSections>
+					<uxap:ObjectPageSubSection title="">
+						<VBox id="idRTEDetailEditContainer"/>
+					</uxap:ObjectPageSubSection>
+				</uxap:subSections>
+			</uxap:ObjectPageSection>
+			<uxap:ObjectPageSection
+				titleUppercase="false"
+				title="{i18n>attachTitle}"
+			>
+				<uxap:subSections>
+					<uxap:ObjectPageSubSection title="">
+						<VBox id="idUploadSetContainer"/>
+					</uxap:ObjectPageSubSection>
+				</uxap:subSections>
+			</uxap:ObjectPageSection>
+		</uxap:sections>
+		<uxap:footer>
+			<Bar>
+				<contentRight>
+					<Button
+						text="{i18n>btnSave}"
+						press="handleSave"
+						type="Emphasized"
+						visible="{viewConfig>/isEdit}"
+					/>
+					<Button
+						text="{i18n>btnCancel}"
+						press="handleCancel"
+						type="Transparent"
+						visible="{viewConfig>/isEdit}"
+					/>
+				</contentRight>
+			</Bar>
+		</uxap:footer>
+	</uxap:ObjectPageLayout>
+</mvc:View>

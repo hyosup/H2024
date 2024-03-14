@@ -1,0 +1,102 @@
+  method SAMPLE01SET_GET_ENTITYSET.
+**try.
+*CALL METHOD SUPER->SAMPLE01SET_GET_ENTITYSET
+*  EXPORTING
+*    IV_ENTITY_NAME           =
+*    IV_ENTITY_SET_NAME       =
+*    IV_SOURCE_NAME           =
+*    IT_FILTER_SELECT_OPTIONS =
+*    IS_PAGING                =
+*    IT_KEY_TAB               =
+*    IT_NAVIGATION_PATH       =
+*    IT_ORDER                 =
+*    IV_FILTER_STRING         =
+*    IV_SEARCH_STRING         =
+**    io_tech_request_context  =
+**  importing
+**    et_entityset             =
+**    es_response_context      =
+*    .
+**  catch /iwbep/cx_mgw_busi_exception.
+**  catch /iwbep/cx_mgw_tech_exception.
+**endtry.
+
+    data: ls_entity  like line of et_entityset,
+          ls_filter_select_option LIKE LINE OF it_filter_select_options.
+
+    types: begin of ty_input,
+             begda    type  string,
+             endda    type  string,
+           end of ty_input.
+    data: ls_input type ty_input.
+
+    loop at it_filter_select_options assigning field-symbol(<fs_filter>).
+      data(lv_property_name) = <fs_filter>-property.
+
+      read table <fs_filter>-select_options assigning field-symbol(<fs_select_option>) index 1.
+      if sy-subrc eq 0.
+        if lv_property_name eq 'input'.
+          call method /ui2/cl_json=>deserialize
+            exporting
+              json         = <fs_select_option>-low
+              pretty_name  = /ui2/cl_json=>pretty_mode-user
+              assoc_arrays = abap_true
+            changing
+              data         = ls_input.
+        endif.
+      endif.
+    endloop.
+
+
+    DATA: BEGIN OF ls_data,
+         Datum      TYPE Datum,
+         CheckVal   TYPE string,
+         TypeVal    TYPE string,
+         LocationVal TYPE string,
+         AmountVal  TYPE string,
+    END OF ls_data.
+    DATA: lt_data LIKE TABLE OF ls_data.
+
+    TYPES: BEGIN OF ty_output,
+            list LIKE STANDARD TABLE OF ls_data WITH EMPTY KEY,
+
+            Badge TYPE string,
+            ChargesN TYPE string,
+            ChargesT TYPE string,
+            PaymentsN TYPE string,
+            PaymentsT TYPE string,
+            DatumS TYPE Datum,
+            DatumE TYPE Datum,
+            Balance TYPE string,
+           END OF ty_output.
+    DATA: ls_output TYPE ty_output.
+
+
+*    CALL FUNCTION
+*    IMPORTING
+    ls_output-badge = '87654321'.
+    ls_output-chargesn = '2'.
+    ls_output-chargest = '52.36'.
+    ls_output-paymentsn = '2'.
+    ls_output-paymentst = '-52.36'.
+    ls_output-datums = sy-Datum.
+    ls_output-datume = sy-Datum.
+    ls_output-balance = '104.72'.
+*    TABLES
+    lt_data = VALUE #( ( Datum = SY-DATUM
+                         CheckVal = ''
+                         TypeVal = 'Payroll deduction'
+                         LocationVal = 'Office(for payroll deduction'
+                         AmountVal = '52.36')
+                       ( Datum = SY-DATUM
+                         CheckVal = '262'
+                         TypeVal = 'Sale'
+                         LocationVal = 'GA'
+                         AmountVal = '52.36') ).
+
+
+    ls_output-list = lt_data.
+    ls_entity-output = cl_fdt_json_serializer=>serialize( data = ls_output pretty_name = 'L' ).
+    APPEND ls_entity TO et_entityset.
+
+  endmethod.

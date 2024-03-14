@@ -1,0 +1,1 @@
+sap.ui.define(["sap/ui/model/type/Currency"],function(e){"use strict";return{formatSemanticAction:function(e,n){if(n){return e+" / "+n}else{return e}}}});

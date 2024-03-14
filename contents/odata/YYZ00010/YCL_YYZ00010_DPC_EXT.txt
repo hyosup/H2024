@@ -1,0 +1,394 @@
+MANDT	MANDT	CLNT	3	0	클라이언트 
+GUID	SYSUUID_X16	RAW	16	0	16 Byte UUID in 16 Bytes (Raw Format)
+CBO_KEY	ZE_CBOKEY	CHAR	100	0	CBO Key
+APP_ID	REPID	CHAR	40	0	ABAP 프로그램 이름
+FILENAME	FILE_NAME	CHAR	257	0	파일이름
+FILESIZE	FILESIZE	NUMC	15	0	파일길이 (바이트)
+MIMETYPE	BAPIMIMETYPE	CHAR	128	0	SRM BAPI: MIME 유형
+DATA	ZE_FILE_DATA	RAWSTRING	0	0	File Data
+.INCLUDE	ZSCAZ00010	STRU	0	0	Timestamp
+ERDAT	ERDAT	DATS	8	0	레코드 생성일 
+ERZET	ERZET	TIMS	6	0	입력 시간
+ERNAM	ERNAM	CHAR	12	0	오브젝트 생성 책임자 이름
+AEDAT	AEDAT	DATS	8	0	최종 변경일
+AEZET	AEZET	TIMS	6	0	최종변경시간 
+AENAM	AENAM	CHAR	12	0	오브젝트 변경자 이름
+ZDEL	ZE_DEL	CHAR	1	0	Delete Flag
+
+
+
+
+  
+  
+  method /IWBEP/IF_MGW_APPL_SRV_RUNTIME~CREATE_STREAM.
+**TRY.
+*CALL METHOD SUPER->/IWBEP/IF_MGW_APPL_SRV_RUNTIME~CREATE_STREAM
+*  EXPORTING
+**    iv_entity_name          =
+**    iv_entity_set_name      =
+**    iv_source_name          =
+*    IS_MEDIA_RESOURCE       =
+**    it_key_tab              =
+**    it_navigation_path      =
+*    IV_SLUG                 =
+**    io_tech_request_context =
+**  IMPORTING
+**    er_entity               =
+*    .
+**  CATCH /iwbep/cx_mgw_busi_exception.
+**  CATCH /iwbep/cx_mgw_tech_exception.
+**ENDTRY.
+    
+    DATA : ls_hdr_param  TYPE ihttpnvp,
+           lt_hdr_params TYPE tihttpnvp,
+           lo_facade     TYPE REF TO /iwbep/if_mgw_dp_int_facade.
+
+    DATA :BEGIN OF ls_filemetadata,
+            filename TYPE string,
+            mimetype TYPE string,
+          END OF ls_filemetadata.
+
+    lo_facade ?= /iwbep/if_mgw_conv_srv_runtime~get_dp_facade( ).
+    lt_hdr_params = lo_facade->get_request_header( ).
+
+    CASE iv_entity_name.
+      WHEN 'File'.
+        DATA ls_data       TYPE YYZ00030.
+        LOOP AT lt_hdr_params INTO ls_hdr_param.
+          CASE ls_hdr_param-name.
+            WHEN 'slug'.
+              ls_data-filename = cl_http_utility=>unescape_url( ls_hdr_param-value ).
+              REPLACE ALL OCCURRENCES OF '"' IN ls_data-filename WITH ``.
+            WHEN 'content-type'. ls_data-mimetype = ls_hdr_param-value.
+            WHEN 'appid'. ls_data-app_id = ls_hdr_param-value.
+            WHEN 'cbokey'. ls_data-cbo_key = ls_hdr_param-value.
+            WHEN 'content-length'. ls_data-filesize = ls_hdr_param-value.
+          ENDCASE.
+        ENDLOOP.
+        IF ls_data-app_id IS INITIAL.
+          RAISE EXCEPTION TYPE /iwbep/cx_mgw_busi_exception
+            EXPORTING
+              textid  = /iwbep/cx_mgw_busi_exception=>business_error
+              message = 'App id is empty'.
+        ENDIF.
+        IF ls_data-cbo_key IS INITIAL.
+          RAISE EXCEPTION TYPE /iwbep/cx_mgw_busi_exception
+            EXPORTING
+              textid  = /iwbep/cx_mgw_busi_exception=>business_error
+              message = 'File key is empty'.
+        ENDIF.
+        IF NOT zcl_caz_gw_util=>get_auth( EXPORTING iv_repid = ls_data-app_id ).
+          RAISE EXCEPTION TYPE /iwbep/cx_mgw_busi_exception
+            EXPORTING
+              textid  = /iwbep/cx_mgw_busi_exception=>business_error
+              message = zcl_caz_gw_util=>mc_msg_auth_err.
+        ENDIF.
+
+        ls_data-guid = cl_system_uuid=>create_uuid_x16_static( ).
+        ls_data-data = is_media_resource-value.
+        ls_data-ernam = sy-uname.
+        ls_data-erdat = sy-datum.
+        ls_data-erzet = sy-uzeit.
+        ls_data-aenam = sy-uname.
+        ls_data-aedat = sy-datum.
+        ls_data-aezet = sy-uzeit.
+
+        INSERT INTO YYZ00030 VALUES ls_data.
+
+        ls_filemetadata-filename = ls_data-filename .
+        ls_filemetadata-mimetype = ls_data-mimetype.
+
+        copy_data_to_ref(
+          EXPORTING
+            is_data = ls_filemetadata
+          CHANGING
+            cr_data = er_entity ).
+
+
+        DATA(lo_message_container) = mo_context->get_message_container( ).
+        lo_message_container->add_message(
+        EXPORTING
+        iv_msg_type = 'S'
+        iv_msg_id = 'ZMSG1'
+        iv_msg_number = '1'
+        iv_msg_v1 = 'Success'
+        iv_is_leading_message = abap_true
+        iv_add_to_response_header = abap_true
+        ).
+        
+        
+        
+  endmethod.
+  
+  
+  
+  
+  
+  
+  
+  
+  
+    method /IWBEP/IF_MGW_APPL_SRV_RUNTIME~GET_STREAM.
+**TRY.
+*CALL METHOD SUPER->/IWBEP/IF_MGW_APPL_SRV_RUNTIME~GET_STREAM
+**  EXPORTING
+**    iv_entity_name          =
+**    iv_entity_set_name      =
+**    iv_source_name          =
+**    it_key_tab              =
+**    it_navigation_path      =
+**    io_tech_request_context =
+**  IMPORTING
+**    er_stream               =
+**    es_response_context     =
+*    .
+**  CATCH /iwbep/cx_mgw_busi_exception.
+**  CATCH /iwbep/cx_mgw_tech_exception.
+**ENDTRY.
+
+    DATA : ls_header   TYPE ihttpnvp,
+           ls_stream   TYPE ty_s_media_resource,
+           lv_filename TYPE string,
+           ls_key      TYPE /iwbep/s_mgw_name_value_pair.
+
+
+    CASE iv_entity_name.
+      WHEN 'File'.
+        DATA : lv_guid     TYPE yyz00030-guid.
+
+        LOOP AT it_key_tab INTO ls_key.
+          CASE ls_key-name.
+            WHEN 'Guid'.
+              TRANSLATE ls_key-value TO UPPER CASE.
+              lv_guid = ls_key-value.
+          ENDCASE.
+        ENDLOOP.
+
+        SELECT SINGLE * INTO @DATA(ls_data) FROM yyz00030 WHERE guid = @lv_guid.
+        CHECK sy-subrc EQ 0.
+
+        lv_filename = ls_data-filename.
+        lv_filename = cl_http_utility=>escape_url( lv_filename ).
+        ls_header-name = 'Content-disposition'.
+        ls_header-value = 'Attachment; filename="' && lv_filename && '";'.
+        set_header( is_header = ls_header ) .
+
+        ls_stream-mime_type = ls_data-mimetype.
+        ls_stream-value = ls_data-data.
+
+        copy_data_to_ref( EXPORTING is_data = ls_stream CHANGING cr_data = er_stream ).
+
+    ENDCASE.
+
+
+  endmethod.
+  
+  
+  
+    method FILELISTSET_DELETE_ENTITY.
+**TRY.
+*CALL METHOD SUPER->FILELISTSET_DELETE_ENTITY
+*  EXPORTING
+*    IV_ENTITY_NAME          =
+*    IV_ENTITY_SET_NAME      =
+*    IV_SOURCE_NAME          =
+*    IT_KEY_TAB              =
+**    io_tech_request_context =
+*    IT_NAVIGATION_PATH      =
+*    .
+**  CATCH /iwbep/cx_mgw_busi_exception.
+**  CATCH /iwbep/cx_mgw_tech_exception.
+**ENDTRY.
+
+
+     DATA : lv_guid   TYPE yyz00030-guid,
+           lv_app_id TYPE yyz00030-app_id,
+           lv_ernam  TYPE yyz00030-ernam.
+
+    LOOP AT it_key_tab INTO DATA(ls_key).
+      CASE ls_key-name.
+        WHEN 'Guid'.
+          TRANSLATE ls_key-value TO UPPER CASE.
+          lv_guid = ls_key-value.
+      ENDCASE.
+    ENDLOOP.
+
+    SELECT SINGLE app_id ernam INTO ( lv_app_id, lv_ernam )
+      FROM yyz00030
+      WHERE guid = lv_guid.
+    IF sy-subrc NE 0.
+      RAISE EXCEPTION TYPE /iwbep/cx_mgw_busi_exception
+        EXPORTING
+          textid  = /iwbep/cx_mgw_busi_exception=>business_error
+          message = zcl_caz_gw_util=>mc_msg_delete_err.
+    ENDIF.
+
+    IF NOT zcl_caz_gw_util=>get_auth( EXPORTING iv_repid = lv_app_id iv_uname = lv_ernam ).
+      RAISE EXCEPTION TYPE /iwbep/cx_mgw_busi_exception
+        EXPORTING
+          textid  = /iwbep/cx_mgw_busi_exception=>business_error
+          message = zcl_caz_gw_util=>mc_msg_auth_err.
+    ENDIF.
+
+    UPDATE yyz00030
+    SET zdel = abap_true
+        aenam = sy-uname
+        aedat = sy-datum
+        aezet = sy-uzeit
+    WHERE guid = lv_guid.
+
+
+
+  endmethod.
+  
+  
+  
+  
+  
+    method FILELISTSET_GET_ENTITY.
+**TRY.
+*CALL METHOD SUPER->FILELISTSET_GET_ENTITY
+*  EXPORTING
+*    IV_ENTITY_NAME          =
+*    IV_ENTITY_SET_NAME      =
+*    IV_SOURCE_NAME          =
+*    IT_KEY_TAB              =
+**    io_request_object       =
+**    io_tech_request_context =
+*    IT_NAVIGATION_PATH      =
+**  IMPORTING
+**    er_entity               =
+**    es_response_context     =
+*    .
+**  CATCH /iwbep/cx_mgw_busi_exception.
+**  CATCH /iwbep/cx_mgw_tech_exception.
+**ENDTRY.
+
+
+     LOOP AT it_key_tab INTO DATA(ls_key).
+      CASE ls_key-name.
+        WHEN 'Guid'.
+          er_entity-guid = ls_key-value.
+      ENDCASE.
+    ENDLOOP.
+
+    SELECT SINGLE guid, cbo_key, filename, filesize, mimetype
+      ,ernam, erdat, erzet, aenam, aedat, aezet
+    INTO @DATA(ls_data)
+    FROM yyz00030
+    WHERE guid = @er_entity-guid
+      AND zdel = @abap_false.
+
+    MOVE-CORRESPONDING ls_data TO er_entity.
+
+    CONVERT DATE ls_data-erdat TIME ls_data-erzet INTO TIME STAMP er_entity-erdat
+    TIME ZONE sy-zonlo.
+    CONVERT DATE ls_data-aedat TIME ls_data-aezet INTO TIME STAMP er_entity-aedat
+    TIME ZONE sy-zonlo.
+
+
+
+  endmethod.
+  
+  
+  
+  
+  
+    method FILELISTSET_GET_ENTITYSET.
+**TRY.
+*CALL METHOD SUPER->FILELISTSET_GET_ENTITYSET
+*  EXPORTING
+*    IV_ENTITY_NAME           =
+*    IV_ENTITY_SET_NAME       =
+*    IV_SOURCE_NAME           =
+*    IT_FILTER_SELECT_OPTIONS =
+*    IS_PAGING                =
+*    IT_KEY_TAB               =
+*    IT_NAVIGATION_PATH       =
+*    IT_ORDER                 =
+*    IV_FILTER_STRING         =
+*    IV_SEARCH_STRING         =
+**    io_tech_request_context  =
+**  IMPORTING
+**    et_entityset             =
+**    es_response_context      =
+*    .
+**  CATCH /iwbep/cx_mgw_busi_exception.
+**  CATCH /iwbep/cx_mgw_tech_exception.
+**ENDTRY.
+
+
+    DATA : lt_entityset TYPE ycl_yyz00010_mpc=>tt_filelist,
+           ls_entity    TYPE ycl_yyz00010_mpc=>ts_filelist,
+           lr_app_id    TYPE RANGE OF ycl_yyz00010_mpc=>ts_filelist-app_id,
+           lr_cbo_key   TYPE RANGE OF ycl_yyz00010_mpc=>ts_filelist-cbo_key,
+           lr_filename  TYPE RANGE OF ycl_yyz00010_mpc=>ts_filelist-filename,
+           lr_ernam     TYPE RANGE OF ycl_yyz00010_mpc=>ts_filelist-ernam.
+
+    DATA(lo_filter) = io_tech_request_context->get_filter( ). "filter parameter object
+    DATA(lt_filter_select_options) = lo_filter->get_filter_select_options( ). "filter parameter
+    DATA(lv_top) = io_tech_request_context->get_top( ) + is_paging-skip. "검색 속도 향상을 위한 최대 조회 건수
+
+    LOOP AT lt_filter_select_options INTO DATA(ls_filter). " filter확인
+      CASE ls_filter-property.
+        WHEN 'APP_ID'. "filter property의 abap name확인
+          lo_filter->convert_select_option( EXPORTING is_select_option = ls_filter
+                                            IMPORTING et_select_option = lr_app_id ).
+        WHEN 'CBO_KEY'.
+          lo_filter->convert_select_option( EXPORTING is_select_option = ls_filter
+                                            IMPORTING et_select_option = lr_cbo_key ).
+        WHEN 'FILENAME'.
+          lo_filter->convert_select_option( EXPORTING is_select_option = ls_filter
+                                            IMPORTING et_select_option = lr_filename ).
+        WHEN 'ERNAM'.
+          lo_filter->convert_select_option( EXPORTING is_select_option = ls_filter
+                                            IMPORTING et_select_option = lr_ernam ).
+      ENDCASE.
+    ENDLOOP.
+
+    CHECK lr_app_id IS NOT INITIAL.
+    CHECK lr_cbo_key IS NOT INITIAL.
+
+    IF io_tech_request_context->has_count( ).
+
+      SELECT COUNT(*) INTO lv_top
+        FROM yyz00030
+       WHERE cbo_key IN lr_cbo_key
+        AND filename IN lr_filename
+        AND ernam IN lr_ernam
+        AND zdel EQ abap_false.
+
+      es_response_context-count = lv_top.
+
+    ELSE.
+
+      SELECT guid, cbo_key, filename, filesize, mimetype, ernam AS createdby
+             ,erdat, erzet, aenam, aedat, aezet
+      UP TO @lv_top ROWS
+      INTO TABLE @DATA(lt_data)
+      FROM yyz00030
+       WHERE cbo_key IN @lr_cbo_key
+        AND filename IN @lr_filename
+        AND ernam IN @lr_ernam
+        AND zdel EQ @abap_false
+      ORDER BY erdat DESCENDING, erzet DESCENDING.
+
+      LOOP AT lt_data ASSIGNING FIELD-SYMBOL(<ls_data>) FROM is_paging-skip + 1.
+        CLEAR ls_entity.
+        MOVE-CORRESPONDING <ls_data> TO ls_entity.
+
+        CONVERT DATE <ls_data>-erdat TIME <ls_data>-erzet INTO TIME STAMP ls_entity-erdat TIME ZONE sy-zonlo.
+        CONVERT DATE <ls_data>-aedat TIME <ls_data>-aezet INTO TIME STAMP ls_entity-aedat TIME ZONE sy-zonlo.
+
+        cl_gdt_conversion=>guid_outbound( EXPORTING im_guid_x = <ls_data>-guid
+          IMPORTING ex_value = ls_entity-downurl ).
+        ls_entity-downurl = `/sap/opu/odata/sap/YYZ00010_SRV/FileSet(Guid=guid'` &&
+        ls_entity-downurl && `')/$value`.
+
+        APPEND ls_entity TO et_entityset.
+      ENDLOOP.
+
+    ENDIF.
+
+
+  endmethod.
